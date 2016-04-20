@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  * This source code is licensed under the MIT-style license found in the
+  * LICENSE file in the root directory of this source tree.
+  -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="@dimen/default_height"
+              android:gravity="center"
+              android:orientation="horizontal"
+              android:paddingBottom="@dimen/default_padding"
+              android:paddingTop="@dimen/default_padding">
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/iv_refresh_arrow"
+            android:layout_width="@dimen/default_arrow_width"
+            android:layout_height="@dimen/default_arrow_height"
+            android:layout_gravity="center"/>
+
+        <ProgressBar
+            android:id="@+id/pb_loading"
+            style="?android:attr/progressBarStyle"
+            android:visibility="gone"
+            android:layout_width="@dimen/default_arrow_width"
+            android:layout_height="@dimen/default_arrow_height"
+            android:indeterminateDrawable="@drawable/refresh_loading_default"
+            />
+    </FrameLayout>
+
+    <Space
+        android:layout_width="@dimen/default_space"
+        android:layout_height="match_parent"/>
+
+    <TextView
+        android:id="@+id/tv_refresh_status"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/default_text_line_height"
+        android:gravity="center_vertical"
+        android:text="@string/pull_to_refresh"
+        android:textColor="#777"
+        android:textSize="@dimen/default_text_size"/>
+</LinearLayout>

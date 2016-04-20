@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="refresh_dot_size">7dp</dimen>
+    <dimen name="refresh_size">24dp</dimen>
+    <dimen name="loading_more_space">8dp</dimen>
+    <dimen name="loading_more_circle_radius">18dp</dimen>
+    <dimen name="loading_more_circle_border_width">2dp</dimen>
+    <dimen name="loading_more_height">40dp</dimen>
+    <dimen name="loading_more_line_width">35dp</dimen>
+    <dimen name="loading_more_line_margin">10dp</dimen>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+</resources>

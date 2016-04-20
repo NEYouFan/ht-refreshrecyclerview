@@ -1,0 +1,37 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/linearLayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="30dp"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <Button
+        android:id="@+id/btn_vertical_down_refresh"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:text="垂直向下刷新Demo"/>
+
+    <Button
+        android:id="@+id/btn_vertical_up_refresh"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:text="垂直向上刷新Demo"/>
+
+    <Button
+        android:id="@+id/btn_horizontal_right_refresh"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:text="水平向右刷新Demo"/>
+
+    <Button
+        android:id="@+id/btn_horizontal_left_refresh"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:text="水平向左刷新Demo"/>
+</LinearLayout>

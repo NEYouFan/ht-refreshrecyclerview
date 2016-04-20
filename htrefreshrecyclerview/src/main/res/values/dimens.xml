@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  * This source code is licensed under the MIT-style license found in the
+  * LICENSE file in the root directory of this source tree.
+  -->
+<resources>
+    <dimen name="default_height">40dp</dimen>
+    <dimen name="default_width">40dp</dimen>
+    <dimen name="default_padding">5dp</dimen>
+    <dimen name="default_space">5dp</dimen>
+    <dimen name="default_text_line_height">20dp</dimen>
+    <dimen name="default_arrow_height">25dp</dimen>
+    <dimen name="default_arrow_width">25dp</dimen>
+    <dimen name="default_text_size">12sp</dimen>
+</resources>

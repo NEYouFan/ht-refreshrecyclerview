@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.netease.demo">
+
+    <application
+        android:name=".MyApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:theme="@style/AppTheme">
+
+        <!-- 自定义刷新包裹类 -->
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".refreshactivity.VerticalDownRefreshActivity"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".refreshactivity.HorizontalRightRefreshActivity">
+        </activity>
+        <activity android:name=".refreshactivity.VerticalUpRefreshActivity">
+        </activity>
+        <activity android:name=".refreshactivity.HorizontalLeftRefreshActivity">
+        </activity>
+    </application>
+
+</manifest>

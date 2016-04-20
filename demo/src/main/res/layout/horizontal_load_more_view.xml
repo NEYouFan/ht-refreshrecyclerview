@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="wrap_content"
+             android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/liner_loading"
+        android:layout_width="40dp"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_normal_refresh_footer_loading"
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:text="正在加载..."
+            android:textColor="#7f000000"
+            android:textSize="12sp"/>
+
+        <ProgressBar
+            android:id="@+id/load_progress"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminateDrawable="@drawable/refresh_loading_default"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/liner_no_more"
+        android:layout_width="40dp"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:visibility="gone"
+        android:orientation="vertical">
+
+        <View
+            android:layout_width="0.5dp"
+            android:layout_height="35dp"
+            android:background="#26000000"/>
+
+        <TextView
+            android:id="@+id/tv_normal_refresh_footer_no_more"
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="10dp"
+            android:text="没有更多了"
+            android:textColor="#7f000000"
+            android:textSize="12sp"/>
+
+        <View
+            android:layout_width="0.5dp"
+            android:layout_height="35dp"
+            android:background="#26000000"/>
+    </LinearLayout>
+
+</FrameLayout>

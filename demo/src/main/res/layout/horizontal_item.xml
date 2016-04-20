@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:id="@+id/footer_layout"
+             android:layout_width="wrap_content"
+             android:layout_height="match_parent"
+             android:background="#1cccce"
+             android:gravity="center"
+             android:padding="8dp">
+
+    <TextView
+        android:id="@+id/text"
+        android:layout_width="40dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="center|right"
+        android:gravity="center"
+        android:text="1111111"
+        android:textSize="16sp"/>
+</FrameLayout>

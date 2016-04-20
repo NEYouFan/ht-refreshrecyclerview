@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  * This source code is licensed under the MIT-style license found in the
+  * LICENSE file in the root directory of this source tree.
+  -->
+<resources>
+    <declare-styleable name="HTRefreshRecyclerView">
+        <!--   <attr name="htDebug" format="boolean" />-->
+        <attr name="htOrientation" format="enum">
+            <enum name="vertical_up" value="0" />
+            <enum name="vertical_down" value="1" />
+            <enum name="horizontal_left" value="2" />
+            <enum name="horizontal_right" value="3" />
+        </attr>
+    </declare-styleable>
+</resources>
