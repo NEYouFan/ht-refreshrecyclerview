@@ -48,19 +48,13 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
         if (mHTViewHolder == null || mHTViewHolder.getRefreshView() == null || mRefreshDelegate == null) {
             return false;
         }
+        if (mRecyclerView.getLayoutManager() == null || canChildScroll()) {
+            return false;
+        }
         if (mLoadMoreStatus == LoadMoreStatus.LOADING || mRefreshStatus == RefreshStatus.REFRESHING) {
             return false;
         }
-        if (mRecyclerView != null) {
-            RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
-            if (manager == null) {
-                return false;
-            }
-            if (manager.getItemCount() <= 1 || Utils.getFirstItemPosition(manager, true) == 0) {//item数目为0或者只有添加的加载更多,允许
-                return true;
-            }
-        }
-        return false;
+        return true;
     }
 
     @Override

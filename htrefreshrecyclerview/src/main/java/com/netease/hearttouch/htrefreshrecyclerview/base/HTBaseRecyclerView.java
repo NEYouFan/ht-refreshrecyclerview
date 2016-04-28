@@ -8,6 +8,7 @@ package com.netease.hearttouch.htrefreshrecyclerview.base;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.support.annotation.NonNull;
+import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.OrientationHelper;
@@ -256,6 +257,23 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
     }
 
 
+    /** 触发刷新的条件判断,是否可以在刷新方向上继续滚动 */
+    public boolean canChildScroll() {
+        switch (mHTOrientation) {
+            case Orientation.VERTICAL_UP:
+                return ViewCompat.canScrollVertically(mRecyclerView, 1);
+            case Orientation.VERTICAL_DOWN:
+                return ViewCompat.canScrollVertically(mRecyclerView, -1);
+            case Orientation.HORIZONTAL_LEFT:
+                return ViewCompat.canScrollHorizontally(mRecyclerView, 1);
+            case Orientation.HORIZONTAL_RIGHT:
+                return ViewCompat.canScrollVertically(mRecyclerView, -1);
+            default:
+                return false;
+        }
+
+    }
+
     /** 处理刷新控件状态变化 */
     protected void processRefreshStatusChanged() {
         if (mRefreshUIChangeListener == null) return;
@@ -442,7 +460,6 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
         mRecyclerView.clearOnScrollListeners();
         mRecyclerView.setOnTouchListener(null);
     }
-
 
 
     /**
