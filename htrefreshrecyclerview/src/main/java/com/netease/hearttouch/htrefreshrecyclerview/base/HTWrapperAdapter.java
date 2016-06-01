@@ -18,11 +18,17 @@ import android.view.ViewGroup;
 public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final int TYPE_LOAD_MORE_VIEW = Integer.MIN_VALUE + 1;
-    /** 内部真正的Adapter */
+    /**
+     * 内部真正的Adapter
+     */
     private RecyclerView.Adapter<RecyclerView.ViewHolder> mInnerAdapter;
-    /** 加载更多ViewHolder生命周期监听 */
+    /**
+     * 加载更多ViewHolder生命周期监听
+     */
     private LoadMoreViewHolderListener mLoadMoreViewHolderListener;
-    /** 自定义的加载更多view */
+    /**
+     * 自定义的加载更多view
+     */
     private View loadMoreView;
 
     private RecyclerView.AdapterDataObserver dataObserver = new RecyclerView.AdapterDataObserver() {
@@ -114,10 +120,9 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
         super.onViewAttachedToWindow(holder);
         if (holder instanceof ViewHolder) {
+            if (loadMoreView == null) return;
             //支持瀑布流布局
             ViewGroup.LayoutParams lp = holder.itemView.getLayoutParams();
-            lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
-            lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
             if (lp instanceof StaggeredGridLayoutManager.LayoutParams) {
                 ((StaggeredGridLayoutManager.LayoutParams) lp).setFullSpan(true);
             }
@@ -176,6 +181,7 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     /**
      * 设置被包裹的Adapter（真正显示数据的Adapter）
+     *
      * @param adapter 被包裹的Adapter
      */
     private void setInnerAdapter(RecyclerView.Adapter<RecyclerView.ViewHolder> adapter) {
@@ -209,7 +215,7 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     /**
      * 自定义的ViewHolder
      */
-     class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder extends RecyclerView.ViewHolder {
         public ViewHolder(View itemView) {
             super(itemView);
         }

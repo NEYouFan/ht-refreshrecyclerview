@@ -121,6 +121,10 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
         setOrientation(checkOrientationVertical() ? VERTICAL : HORIZONTAL); //设置整个界面布局的方向
         mRefreshContainerView.setGravity(Gravity.CENTER);
         mLoadMoreContainerView.setGravity(Gravity.CENTER);
+        mLoadMoreContainerView.setLayoutParams(new ViewGroup.LayoutParams(
+                checkOrientationVertical() ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT,
+                checkOrientationVertical() ? ViewGroup.LayoutParams.WRAP_CONTENT : ViewGroup.LayoutParams.MATCH_PARENT));
+
         setRefreshViewLayoutParams(mRefreshContainerView);
 
         //设置RecyclerView的布局参数,由于是使用attrs创建RecyclerView,需要把一些参数重置
@@ -214,8 +218,8 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
                 mRefreshContainerView.setBackgroundResource(android.R.color.transparent);
             }
             mRefreshContainerView.removeAllViews();
-            mRefreshContainerView.addView(refreshView);
             setRefreshViewLayoutParams(refreshView);
+            mRefreshContainerView.addView(refreshView);
             hideRefreshView(true);
         }
         setRefreshUIChangeListener(mHTViewHolder);
@@ -236,9 +240,8 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
                 mLoadMoreContainerView.setBackgroundResource(android.R.color.transparent);
             }
             mLoadMoreContainerView.removeAllViews();
-
-            mLoadMoreContainerView.addView(loadMoreView);
             setRefreshViewLayoutParams(loadMoreView);
+            mLoadMoreContainerView.addView(loadMoreView);
             hideLoadMoreView(true);
         }
         setLoadMoreUIChangeListener(mHTViewHolder);
