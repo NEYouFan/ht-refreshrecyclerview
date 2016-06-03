@@ -49,7 +49,7 @@
 ### Gradle
 
 ```
-compile 'com.netease.hearttouch:ht-refreshrecyclerview:0.1.0'
+compile 'com.netease.hearttouch:ht-refreshrecyclerview:0.1.1'
 ```
 
 ### Maven
