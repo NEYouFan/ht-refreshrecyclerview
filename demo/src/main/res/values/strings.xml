@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Demo</string>
+    <string name="app_name">HTRefreshRecyclerView</string>
     <string-array name="cat_names">
         <item>George</item>
         <item>Zubin</item>
