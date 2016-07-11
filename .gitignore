@@ -4,5 +4,5 @@
 .DS_Store
 /build
 /captures
-app/app.iml
+*.iml
 
