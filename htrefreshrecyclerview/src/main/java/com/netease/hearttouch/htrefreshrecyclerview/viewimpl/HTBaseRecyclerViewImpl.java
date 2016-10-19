@@ -134,7 +134,10 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
             processRefreshStatusChanged();
             mRefreshDelegate.onRefresh();
             //将刷新控件显示到正确的位置
-            changeRefreshViewPositionWithAnimation(0, null);
+            if (mRefreshStatus == RefreshStatus.REFRESHING) {
+                changeRefreshViewPositionWithAnimation(0, null);
+
+            }
 
         }
     }
@@ -156,6 +159,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
     protected void endRefresh() {
         if (mRefreshStatus == RefreshStatus.REFRESHING && mRefreshDelegate != null && mHTViewHolder != null) {
             mRefreshUIChangeListener.onRefreshComplete();
+            mRefreshStatus = RefreshStatus.IDLE;
             changeRefreshViewPositionWithAnimation(mMinRefreshViewPadding, new Animator.AnimatorListener() {
                 @Override
                 public void onAnimationStart(Animator animation) {
@@ -164,7 +168,6 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    mRefreshStatus = RefreshStatus.IDLE;
                     processRefreshStatusChanged();
                 }
 
@@ -320,14 +323,18 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
     }
 
 
-    /** 在加载更多视图被attachToWindow之前,判断当前显示的内容是否达到显示加载更多的条件 */
+    /**
+     * 在加载更多视图被attachToWindow之前,判断当前显示的内容是否达到显示加载更多的条件
+     */
     public boolean isCurrentItemSizeOver(boolean includeLoadMore) {
         int currentSize = getOrientation() == VERTICAL ? mRecyclerView.getMeasuredHeight() : mRecyclerView.getMeasuredWidth();
         boolean canScroll = calculateChildrenSize(includeLoadMore) >= currentSize;
         return mLoadMoreDelegate != null && mRefreshStatus != HTBaseRecyclerView.RefreshStatus.REFRESHING && canScroll;
     }
 
-    /** 隐藏刷新控件带动画 */
+    /**
+     * 隐藏刷新控件带动画
+     */
     protected void changeRefreshViewPositionWithAnimation(int targetPosition, @Nullable Animator.AnimatorListener animatorListener) {
         int startValue = 0;
         switch (mHTOrientation) {
@@ -344,17 +351,16 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 startValue = mRefreshContainerView.getPaddingLeft();
                 break;
         }
-        if (startValue < mMinRefreshViewPadding) return;
+        if (startValue < mMinRefreshViewPadding) {
+            return;
+        }
         mRefreshAnimator = ValueAnimator.ofInt(startValue, targetPosition);
         mRefreshAnimator.setDuration(mHTViewHolder.getAnimationTime());
         mRefreshAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 int padding = (int) animation.getAnimatedValue();
-                mRefreshContainerView.setPadding(mHTOrientation == Orientation.HORIZONTAL_RIGHT ? padding : 0,
-                        mHTOrientation == Orientation.VERTICAL_DOWN ? padding : 0,
-                        mHTOrientation == Orientation.HORIZONTAL_LEFT ? padding : 0,
-                        mHTOrientation == Orientation.VERTICAL_UP ? padding : 0);
+                updateRefreshView(padding);
             }
         });
         if (animatorListener != null) {
@@ -364,7 +370,16 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
     }
 
 
-    /** 隐藏刷新空间带动画 */
+    protected void updateRefreshView(int padding) {
+        mRefreshContainerView.setPadding(mHTOrientation == Orientation.HORIZONTAL_RIGHT ? padding : 0,
+                mHTOrientation == Orientation.VERTICAL_DOWN ? padding : 0,
+                mHTOrientation == Orientation.HORIZONTAL_LEFT ? padding : 0,
+                mHTOrientation == Orientation.VERTICAL_UP ? padding : 0);
+    }
+
+    /**
+     * 隐藏刷新空间带动画
+     */
     protected void changeLoadMoreViewPositionWithAnimation(int targetPosition, @Nullable Animator.AnimatorListener animatorListener) {
         int startValue = 0;
         switch (mHTOrientation) {
