@@ -37,6 +37,12 @@ public interface HTRefreshRecyclerViewInterface {
     void setLoadMoreViewShow(boolean loadMoreShow);
 
     /**
+     * 是否允许刷新的时候，界面滚动,默认不能滚动
+     * @param enableScrollOnReFresh
+     */
+    void setEnableScrollOnRefresh(boolean enableScrollOnReFresh);
+
+    /**
      * 设置加载更多事件监听,若设置为null,则不触发加载更多
      * @param loadMoreDelegate 加载更多事件监听对象
      */

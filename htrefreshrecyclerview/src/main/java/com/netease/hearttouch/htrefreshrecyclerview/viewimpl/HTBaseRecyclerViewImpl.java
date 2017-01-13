@@ -136,7 +136,6 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
             //将刷新控件显示到正确的位置
             if (mRefreshStatus == RefreshStatus.REFRESHING) {
                 changeRefreshViewPositionWithAnimation(0, null);
-
             }
 
         }

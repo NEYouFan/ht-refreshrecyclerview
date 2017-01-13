@@ -55,6 +55,7 @@ public class VerticalDownRefreshActivity extends AppCompatActivity implements HT
 //        layoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);//设置瀑布流布局方式
 //         layoutManager = new GridLayoutManager(this, 2);//设置列表布局方式
         mRefreshLayout.setLayoutManager(layoutManager);//设置列表布局方式
+        mRefreshLayout.setEnableScrollOnRefresh(true);
         mRefreshLayout.addItemDecoration(new DividerItemDecoration(DividerItemDecoration.VERTICAL));
         mRefreshLayout.setAdapter(myAdapter);//设置数据源
         mRefreshLayout.setOnLoadMoreListener(this);//实现OnLoadMoreListener接口

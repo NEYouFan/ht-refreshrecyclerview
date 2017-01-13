@@ -56,6 +56,7 @@ public class HorizontalLeftRefreshActivity extends AppCompatActivity implements 
         // layoutManager = new GridLayoutManager(this, 2);//设置列表布局方式
         mRefreshLayout.setLayoutManager(layoutManager);//设置列表布局方式
         mRefreshLayout.addItemDecoration(new DividerItemDecoration(DividerItemDecoration.HORIZONTAL, true));
+        mRefreshLayout.setEnableScrollOnRefresh(true);
         mRefreshLayout.setAdapter(myAdapter);//设置数据源
         mRefreshLayout.setOnLoadMoreListener(this);//实现OnLoadMoreListener接口
         mRefreshLayout.setOnRefreshListener(this);//实现OnRefreshListener接口

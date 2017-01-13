@@ -99,7 +99,6 @@ public class HTVerticalRecyclerViewImpl extends HTBaseRecyclerViewImpl {
                     boolean isPreviousIdle = mRefreshStatus == RefreshStatus.IDLE;
                     mRefreshStatus = RefreshStatus.PULL_DOWN;
                     mRefreshUIChangeListener.onRefreshStart(isPreviousIdle);
-
                 }
                 //计算下拉距离比值
                 float scale = 1 - paddingTopOrBottom * 1.0f / (mMinRefreshViewPadding == 0 ? 1 : mMinRefreshViewPadding);

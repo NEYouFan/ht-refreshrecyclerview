@@ -93,6 +93,10 @@ public class HTRefreshRecyclerView extends FrameLayout implements HTRefreshRecyc
         mRecyclerViewProxy.setLoadMoreViewShow(loadMoreShow);
     }
 
+    public void setEnableScrollOnRefresh(boolean enableScrollOnReFresh) {
+        mRecyclerViewProxy.setEnableScrollOnRefresh(enableScrollOnReFresh);
+    }
+
     @Override
     public void setOnLoadMoreListener(HTLoadMoreListener loadMoreDelegate) {
         mRecyclerViewProxy.setOnLoadMoreListener(loadMoreDelegate);

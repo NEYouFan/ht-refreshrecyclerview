@@ -57,6 +57,7 @@ public class VerticalUpRefreshActivity extends AppCompatActivity implements HTLo
         mRefreshLayout.setLayoutManager(layoutManager);//设置列表布局方式
         mRefreshLayout.addItemDecoration(new DividerItemDecoration(DividerItemDecoration.VERTICAL, true));
         mRefreshLayout.setAdapter(myAdapter);//设置数据源
+        mRefreshLayout.setEnableScrollOnRefresh(true);
         mRefreshLayout.setOnLoadMoreListener(this);//实现OnLoadMoreListener接口
         mRefreshLayout.setOnRefreshListener(this);//实现OnRefreshListener接口
 //        mRefreshLayout.setLoadMoreViewShow(false);

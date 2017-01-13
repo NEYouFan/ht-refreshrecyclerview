@@ -81,6 +81,10 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
     protected int mMinRefreshViewPadding;
     protected int mMaxRefreshViewPadding;
 
+
+    /**是否允许刷新的时候，界面滚动*/
+    protected boolean mEnableScrollOnReFresh=false;
+
     protected int mInterceptTouchDownX = -1;
     protected int mInterceptTouchDownY = -1;
     protected float mRefreshDownY = -1;
@@ -464,6 +468,9 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
         mRecyclerView.setOnTouchListener(null);
     }
 
+    public void setEnableScrollOnRefresh(boolean enableScrollOnReFresh) {
+        mEnableScrollOnReFresh = enableScrollOnReFresh;
+    }
 
     /**
      * 禁止刷新的时候滑动列表
@@ -474,7 +481,7 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
                 new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
-                        return mRefreshStatus == RefreshStatus.REFRESHING;
+                        return !mEnableScrollOnReFresh && mRefreshStatus == RefreshStatus.REFRESHING;
                     }
                 }
         );
@@ -697,14 +704,6 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
         }
     }
 
-    /** 刷新控件中RecyclerView的滚动事件监听接口 */
-    public interface OnScrollListener {
-        void onScrollStateChanged(RecyclerView recyclerView, int newState);
-
-        void onScrolled(RecyclerView recyclerView, int dx, int dy);
-    }
-
-
     /** 控件刷新方向定义 */
     public static final class Orientation {
         /** 垂直向上 */
@@ -716,7 +715,6 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
         /** 水平向右 */
         public static final int HORIZONTAL_RIGHT = 3;
     }
-
 
     /** 刷新状态定义 */
     protected static class RefreshStatus {
@@ -730,6 +728,13 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
     protected static class LoadMoreStatus {
         public static final int IDLE = 0;
         public static final int LOADING = 1;
+    }
+
+    /** 刷新控件中RecyclerView的滚动事件监听接口 */
+    public interface OnScrollListener {
+        void onScrollStateChanged(RecyclerView recyclerView, int newState);
+
+        void onScrolled(RecyclerView recyclerView, int dx, int dy);
     }
 
     /** 刷新监听接口,可以控制刷新视图在不同的阶段进行不同的操作 */
