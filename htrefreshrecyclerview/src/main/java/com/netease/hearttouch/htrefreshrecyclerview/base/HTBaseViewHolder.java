@@ -7,6 +7,7 @@ package com.netease.hearttouch.htrefreshrecyclerview.base;
 
 import android.content.Context;
 import android.view.View;
+import android.view.ViewGroup;
 
 /**
  * 刷新视图和加载更多视图的包裹基类,用户需要继承该类完成自定义视图样式
@@ -47,7 +48,11 @@ public abstract class HTBaseViewHolder implements HTBaseRecyclerView.HTLoadMoreU
         if (loadMoreViewBackgroundResId > 0) {
             this.mLoadMoreViewBackgroundResId = loadMoreViewBackgroundResId;
             if (mLoadMoreView != null) {
-                mLoadMoreView.setBackgroundResource(loadMoreViewBackgroundResId);
+//                mLoadMoreView.setBackgroundResource(loadMoreViewBackgroundResId);
+                ViewGroup container= (ViewGroup) mLoadMoreView.getParent();
+                if(container!=null){
+                    container.setBackgroundResource(loadMoreViewBackgroundResId);
+                }
             }
         }
     }
@@ -60,7 +65,11 @@ public abstract class HTBaseViewHolder implements HTBaseRecyclerView.HTLoadMoreU
         if (refreshViewBackgroundResId > 0) {
             mRefreshViewBackgroundResId = refreshViewBackgroundResId;
             if (mRefreshView != null) {
-                mRefreshView.setBackgroundResource(refreshViewBackgroundResId);
+//                mRefreshView.setBackgroundResource(refreshViewBackgroundResId);
+                ViewGroup container= (ViewGroup) mRefreshView.getParent();
+                if(container!=null){
+                    container.setBackgroundResource(refreshViewBackgroundResId);
+                }
             }
         }
     }
