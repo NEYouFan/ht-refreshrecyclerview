@@ -25,9 +25,9 @@ import java.util.Arrays;
  */
 abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
 
-    private boolean isOver;
+    private boolean mScreenFilled;
     private int mStartPosition;
-    private int mCount;
+    private int mItemCount;
     protected ValueAnimator mLoadMoreAnimator;
     protected ValueAnimator mRefreshAnimator;
 
@@ -68,8 +68,8 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
             return false;
         }
 
-        if (!hasMore) {//没有更多数据不再触发加载更多
-            if (isOver && !loadMoreShow) {//允许自动隐藏
+        if (!mHasMore) {//没有更多数据不再触发加载更多
+            if (mScreenFilled && !mLoadMoreViewDisplay) {//允许自动隐藏
                 postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -90,7 +90,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
             return true;
         }
 
-        int firstVisibleItem = Utils.getFirstItemPosition(manager, false);
+        int firstVisibleItem = Utils.getFirstItemPosition(manager, false);//获取第一个可见的Item位置
         return firstVisibleItem + manager.getChildCount() >= manager.getItemCount();
     }
 
@@ -104,11 +104,11 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 stopLoadMorePositionAnimation();
                 //在拉动过程中,会触发该事件,这里做一些过滤,减少计算
                 if (mRefreshStatus == RefreshStatus.IDLE || mRefreshStatus == RefreshStatus.REFRESHING) {
-                    isOver = isCurrentItemSizeOver(false);
+                    mScreenFilled = isCurrentItemSizeOver(false);
                 }
-                hideLoadMoreView(!isOver);
+                hideLoadMoreView(!mScreenFilled);
                 mStartPosition = 0;
-                mCount = 0;
+                mItemCount = 0;
             }
 
             @Override
@@ -122,7 +122,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
             @Override
             public void onItemRemoved(int positionStart, int itemCount) {
                 mStartPosition = positionStart;//处理动画删除item时的loadMore的显示问题
-                mCount = itemCount;
+                mItemCount = itemCount;
             }
         });
     }
@@ -144,7 +144,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
     @Override
     protected void startLoadMore() {
         if (mLoadMoreStatus != LoadMoreStatus.LOADING && mLoadMoreDelegate != null && mHTViewHolder != null) {
-            if (hasMore) {
+            if (mHasMore) {
                 mLoadMoreStatus = LoadMoreStatus.LOADING;
                 processLoadMoreStatusChanged();
                 mLoadMoreDelegate.onLoadMore();
@@ -189,9 +189,9 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
         if (mLoadMoreStatus == LoadMoreStatus.LOADING && mLoadMoreDelegate != null && mHTViewHolder != null) {
             mLoadMoreStatus = LoadMoreStatus.IDLE;
             processLoadMoreStatusChanged();
-            if (loadMoreShow) {//一直显示没有更多提示
-                if (isOver) {
-                    if (hasMore) {//还有更多数据的时候,满一屏动画隐藏,否则直接隐藏
+            if (mLoadMoreViewDisplay) {//一直显示没有更多提示
+                if (mScreenFilled) {
+                    if (mHasMore) {//还有更多数据的时候,满一屏动画隐藏,否则直接隐藏
                         changeLoadMoreViewPositionWithAnimation(-getLoadMoreSize(), null);
                     } else {
                         hideLoadMoreView(false);
@@ -200,7 +200,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                     hideLoadMoreView(true);
                 }
             } else {
-                if (isOver) {
+                if (mScreenFilled) {
                     changeLoadMoreViewPositionWithAnimation(-getLoadMoreSize(), null);
                 } else {
                     hideLoadMoreView(true);
@@ -226,7 +226,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
 
     @Override
     public void setRefreshCompleted(boolean hasMore) {
-        this.hasMore = hasMore;
+        this.mHasMore = hasMore;
         if (mLoadMoreStatus == LoadMoreStatus.IDLE) {//非加载更多数据时,数据变化需要重置加载更多视图
             processLoadMoreStatusChanged();
         }
@@ -273,7 +273,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
     }
 
     private void showLoadingMoreView() {
-        if (!isOver) {
+        if (!mScreenFilled) {
             hideLoadMoreView(false);
         }
         if (mRecyclerView != null) {
@@ -307,7 +307,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 View child = layoutManager.getChildAt(index);
                 if (child != null && (includeLoadMore || child != mLoadMoreContainerView)) {
                     int position = layoutManager.getPosition(child);
-                    if (position > -1 && position >= mStartPosition && position < mStartPosition + mCount) {
+                    if (position > -1 && position >= mStartPosition && position < mStartPosition + mItemCount) {
                         continue;//删除item时,因为pre-layout的原因,需要排除被删除的view
                     }
                     RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) child.getLayoutParams();

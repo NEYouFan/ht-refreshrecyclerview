@@ -52,8 +52,8 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
     protected HTWrapperAdapter mHTWrapperAdapter;
     /** 真正的Adapter对象 */
     protected RecyclerView.Adapter mInnerAdapter;
-    /** 是否允许没有更多数据时加载视图一直显示,默认显示 */
-    protected boolean loadMoreShow = true;
+    /** 是否允许没有更多数据时加载视图一直显示(不满一屏幕一直隐藏),默认显示 */
+    protected boolean mLoadMoreViewDisplay = true;
     /** 包裹自定义刷新view的控件 */
     protected final LinearLayout mRefreshContainerView;
     /** 包裹自定义加载更多view的控件 */
@@ -73,7 +73,7 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
     /** 控件的刷新方向枚举值,默认垂直向下方向 */
     protected int mHTOrientation = Orientation.VERTICAL_DOWN;
     /** 标示加载更多的数据状态 */
-    protected boolean hasMore = true;
+    protected boolean mHasMore = true;
     /** 维护自定义滚动接口列表 */
     private final ArrayList<OnScrollListener> mScrollListeners = new ArrayList<>();
 
@@ -199,8 +199,15 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
     /** 设置刷新和加载更多的视图控件并初始化 */
     public void setRefreshViewHolder(@NonNull HTBaseViewHolder refreshViewHolder) {
         mHTViewHolder = refreshViewHolder;
+        resetRefreshViewHolderView();
         initRefreshView();
         initLoadMoreView();
+    }
+
+
+    private void resetRefreshViewHolderView() {
+        mRefreshContainerView.removeAllViews();
+        mLoadMoreContainerView.removeAllViews();
     }
 
 
@@ -307,10 +314,10 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
         if (mLoadMoreUIChangeListener == null) return;
         switch (mLoadMoreStatus) {
             case LoadMoreStatus.IDLE:
-                mLoadMoreUIChangeListener.onLoadMoreComplete(hasMore);
+                mLoadMoreUIChangeListener.onLoadMoreComplete(mHasMore);
                 break;
             case LoadMoreStatus.LOADING:
-                mLoadMoreUIChangeListener.onLoadMoreStart(hasMore);
+                mLoadMoreUIChangeListener.onLoadMoreStart(mHasMore);
                 break;
             default:
                 break;
@@ -565,7 +572,7 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
 
 
     public void setLoadMoreViewShow(boolean loadMoreShow) {
-        this.loadMoreShow = loadMoreShow;
+        this.mLoadMoreViewDisplay = loadMoreShow;
     }
 
     @Override

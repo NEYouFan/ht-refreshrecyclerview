@@ -55,7 +55,7 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         public void onItemRangeRemoved(int positionStart, int itemCount) {
             super.onItemRangeRemoved(positionStart, itemCount);
             notifyItemRangeRemoved(positionStart, itemCount);
-            if (mLoadMoreViewHolderListener != null) {//用来处理带动画效果删除时,加载更多的显示
+            if (mLoadMoreViewHolderListener != null) {//用来通知删除位置，以便处理带动画效果删除时,加载更多的显示
                 mLoadMoreViewHolderListener.onItemRemoved(positionStart, itemCount);
             }
         }
@@ -64,7 +64,7 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         public void onItemRangeMoved(int fromPosition, int toPosition, int itemCount) {
             super.onItemRangeMoved(fromPosition, toPosition, itemCount);
             notifyItemRangeChanged(fromPosition, toPosition + itemCount);
-            if (mLoadMoreViewHolderListener != null) {
+            if (mLoadMoreViewHolderListener != null) {//用来通知删除位置，以便处理带动画效果删除时,加载更多的显示
                 mLoadMoreViewHolderListener.onItemRemoved(fromPosition, toPosition + itemCount);
             }
         }
@@ -199,7 +199,7 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     /**
-     * 加载更多生命周期相关事件监听接口
+     * 加载更多视图生命周期相关事件监听接口
      */
     public interface LoadMoreViewHolderListener {
 
@@ -216,7 +216,7 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
      * 自定义的ViewHolder
      */
     class ViewHolder extends RecyclerView.ViewHolder {
-        public ViewHolder(View itemView) {
+        ViewHolder(View itemView) {
             super(itemView);
         }
     }
