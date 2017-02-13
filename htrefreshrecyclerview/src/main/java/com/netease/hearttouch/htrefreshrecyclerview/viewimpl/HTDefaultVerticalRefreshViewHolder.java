@@ -15,6 +15,8 @@ import android.widget.TextView;
 import com.netease.hearttouch.htrefreshrecyclerview.R;
 import com.netease.hearttouch.htrefreshrecyclerview.base.HTBaseRecyclerView;
 import com.netease.hearttouch.htrefreshrecyclerview.base.HTBaseViewHolder;
+import com.netease.hearttouch.htrefreshrecyclerview.base.HTOrientation;
+import com.netease.hearttouch.htrefreshrecyclerview.base.HTViewHolderTracker;
 
 /**
  * 默认垂直方向的刷新样式实现
@@ -45,7 +47,7 @@ public class HTDefaultVerticalRefreshViewHolder extends HTBaseViewHolder {
 
     @Override
     public View onInitRefreshView() {
-        View refreshView = View.inflate(mContext, R.layout.view_vertical_refresh_default, null);
+        View refreshView = View.inflate(mContext, R.layout.ht_view_vertical_refresh_default, null);
         mTvRefreshStatus = (TextView) refreshView.findViewById(R.id.tv_refresh_status);
         mIvRefreshArrow = (ImageView) refreshView.findViewById(R.id.iv_refresh_arrow);
         mRefreshProgressBar = (ProgressBar) refreshView.findViewById(R.id.pb_loading);
@@ -54,7 +56,7 @@ public class HTDefaultVerticalRefreshViewHolder extends HTBaseViewHolder {
 
     @Override
     public View onInitLoadMoreView() {
-        View loadMoreView = View.inflate(mContext, R.layout.view_vertical_load_more_default, null);
+        View loadMoreView = View.inflate(mContext, R.layout.ht_view_vertical_load_more_default, null);
         mVLoadMore = loadMoreView.findViewById(R.id.liner_loading);
         mVNoMore = loadMoreView.findViewById(R.id.tv_no_more);
         return loadMoreView;
@@ -62,6 +64,7 @@ public class HTDefaultVerticalRefreshViewHolder extends HTBaseViewHolder {
 
     @Override
     public void onLoadMoreStart(boolean hasMore) {
+
     }
 
     @Override
@@ -78,51 +81,61 @@ public class HTDefaultVerticalRefreshViewHolder extends HTBaseViewHolder {
     @Override
     public void onReset() {
         mRefreshProgressBar.setVisibility(View.GONE);
-        mTvRefreshStatus.setVisibility(View.VISIBLE);
-        mIvRefreshArrow.clearAnimation();
-        mIvRefreshArrow.setVisibility(View.VISIBLE);
+        hideRotateView();
     }
 
     @Override
-    public void onRefreshStart(boolean isPreStatusIdle) {
-        if (isPreStatusIdle) return;
+    public void onRefreshPrepare() {
         mRefreshProgressBar.setVisibility(View.GONE);
-        mTvRefreshStatus.setVisibility(View.VISIBLE);
         mIvRefreshArrow.setVisibility(View.VISIBLE);
         mTvRefreshStatus.setText(R.string.pull_to_refresh);
-        mIvRefreshArrow.startAnimation(mDownAnim);
-    }
-
-    @Override
-    public void onReleaseToRefresh() {
-        mTvRefreshStatus.setText(R.string.release_to_refresh);
-        mIvRefreshArrow.startAnimation(mUpAnim);
     }
 
     @Override
     public void onRefreshing() {
+        hideRotateView();
         mRefreshProgressBar.setVisibility(View.VISIBLE);
         mTvRefreshStatus.setText(R.string.refresh);
+    }
+
+    private void hideRotateView() {
         mIvRefreshArrow.clearAnimation();//清空动画才能隐藏
         mIvRefreshArrow.setVisibility(View.GONE);
     }
 
     @Override
     public void onRefreshComplete() {
+        hideRotateView();
+        mRefreshProgressBar.setVisibility(View.GONE);
+        mTvRefreshStatus.setText(R.string.refresh_complete);
+
     }
 
     @Override
-    public void onRefreshPositionChange(float scale, float moveDistance) {
+    public void onRefreshPositionChange(float scale, float moveDistance, int refreshStatus, HTViewHolderTracker viewHolderTracker) {
+        final int mOffsetToRefresh = viewHolderTracker.getOffsetToRefresh();
+        final int currentPos = viewHolderTracker.getCurrentPos();
+        final int lastPos = viewHolderTracker.getLastPos();
+        final boolean isTouch = viewHolderTracker.isUnderTouch();
+        if (isTouch && refreshStatus == HTBaseRecyclerView.RefreshStatus.REFRESH_PREPARE) {
+            if (currentPos < mOffsetToRefresh && lastPos >= mOffsetToRefresh) {
+                mTvRefreshStatus.setText(R.string.pull_to_refresh);
+                mIvRefreshArrow.startAnimation(mDownAnim);
 
+            } else if (currentPos > mOffsetToRefresh && lastPos <= mOffsetToRefresh) {
+                mTvRefreshStatus.setText(R.string.release_to_refresh);
+                mIvRefreshArrow.startAnimation(mUpAnim);
+            }
+        }
     }
 
     public void setDefaultRefreshViewArrow(int orientation) {
         if (mIvRefreshArrow == null) return;
         switch (orientation) {
-            case HTBaseRecyclerView.Orientation.VERTICAL_UP:
-                mIvRefreshArrow.setImageResource(R.drawable.up_arrow_default);
+            case HTOrientation.VERTICAL_UP:
+                mIvRefreshArrow.setImageResource(R.drawable.ht_up_arrow_default);
                 break;
-            case HTBaseRecyclerView.Orientation.VERTICAL_DOWN:
+            case HTOrientation.VERTICAL_DOWN:
             default:
                 mIvRefreshArrow.setImageResource(R.mipmap.refresh_down_arrow_default);
                 break;

@@ -15,18 +15,17 @@ import android.support.v7.widget.OrientationHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.AttributeSet;
-import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import com.netease.hearttouch.htrefreshrecyclerview.HTLoadMoreListener;
 import com.netease.hearttouch.htrefreshrecyclerview.HTRecyclerViewDragListener;
 import com.netease.hearttouch.htrefreshrecyclerview.HTRefreshListener;
 import com.netease.hearttouch.htrefreshrecyclerview.R;
-import com.netease.hearttouch.htrefreshrecyclerview.utils.Utils;
 import com.netease.hearttouch.htrefreshrecyclerview.viewimpl.HTDefaultHorizontalRefreshViewHolder;
 import com.netease.hearttouch.htrefreshrecyclerview.viewimpl.HTDefaultVerticalRefreshViewHolder;
 
@@ -34,62 +33,97 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
+import static android.widget.LinearLayout.HORIZONTAL;
+import static android.widget.LinearLayout.VERTICAL;
+
 /**
  * 刷新控件基类
  */
-public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefreshRecyclerViewInterface {
+public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshRecyclerViewInterface {
     private static final String TAG = HTBaseRecyclerView.class.getSimpleName();
-    /** 设置全局的默认刷新加载样式 */
+    /**
+     * 设置全局的默认刷新加载样式
+     */
     private static Class<? extends HTBaseViewHolder> sViewHolderClass;
-    /** 刷新监听 */
+    /**
+     * 刷新监听
+     */
     public HTRefreshListener mRefreshDelegate;
-    /** 加载更多代理监听 */
+    /**
+     * 加载更多代理监听
+     */
     public HTLoadMoreListener mLoadMoreDelegate;
-    /** 设置刷新加载样式 */
+    /**
+     * 设置刷新加载样式
+     */
     protected HTBaseViewHolder mHTViewHolder;
+
+    protected HTViewHolderTracker mHTViewHolderTracker;
+
     protected RecyclerView.OnScrollListener mInnerScrollListener;
-    /** 自定义的包裹的Adapter对象 */
+    /**
+     * 自定义的包裹的Adapter对象
+     */
     protected HTWrapperAdapter mHTWrapperAdapter;
-    /** 真正的Adapter对象 */
+    /**
+     * 真正的Adapter对象
+     */
     protected RecyclerView.Adapter mInnerAdapter;
-    /** 是否允许没有更多数据时加载视图一直显示(不满一屏幕一直隐藏),默认显示 */
+    /**
+     * 是否允许没有更多数据时加载视图一直显示(不满一屏幕一直隐藏),默认显示
+     */
     protected boolean mLoadMoreViewDisplay = true;
-    /** 包裹自定义刷新view的控件 */
-    protected final LinearLayout mRefreshContainerView;
-    /** 包裹自定义加载更多view的控件 */
-    protected final LinearLayout mLoadMoreContainerView;
-    /** 封装的RecyclerView控件 */
+    /**
+     * 包裹自定义刷新view的控件
+     */
+    protected final ViewGroup mRefreshContainerView;
+    /**
+     * 包裹自定义加载更多view的控件
+     */
+    protected final ViewGroup mLoadMoreContainerView;
+    /**
+     * 封装的RecyclerView控件
+     */
     protected final RecyclerView mRecyclerView;
-    /** 刷新视图变化接口监听 */
+    /**
+     * 刷新视图变化接口监听
+     */
     protected HTRefreshUIChangeListener mRefreshUIChangeListener;
-    /** 加载视图变化接口监听 */
+    /**
+     * 加载视图变化接口监听
+     */
     protected HTLoadMoreUIChangeListener mLoadMoreUIChangeListener;
-    /** 刷新控件拖拽监听 */
+    /**
+     * 刷新控件拖拽监听
+     */
     private HTRecyclerViewDragListener mRecyclerViewDragListener;
-    /** 加载更多状态枚举值 */
+    /**
+     * 加载更多状态枚举值
+     */
     protected int mLoadMoreStatus = LoadMoreStatus.IDLE;
-    /** 刷新状态枚举值 */
+    /**
+     * 刷新状态枚举值
+     */
     protected int mRefreshStatus = RefreshStatus.IDLE;
-    /** 控件的刷新方向枚举值,默认垂直向下方向 */
-    protected int mHTOrientation = Orientation.VERTICAL_DOWN;
-    /** 标示加载更多的数据状态 */
+    /**
+     * 控件的刷新方向枚举值,默认垂直向下方向
+     */
+    protected int mHTOrientation = HTOrientation.VERTICAL_DOWN;
+    /**
+     * 标示加载更多的数据状态
+     */
     protected boolean mHasMore = true;
-    /** 维护自定义滚动接口列表 */
+    /**
+     * 维护自定义滚动接口列表
+     */
     private final ArrayList<OnScrollListener> mScrollListeners = new ArrayList<>();
 
-    /** 刷新视图的最大最小padding值,用于显隐 */
-    protected int mMinRefreshViewPadding;
-    protected int mMaxRefreshViewPadding;
+    /**
+     * 是否允许刷新的时候，界面滚动
+     */
+    protected boolean mEnableScrollOnReFresh = false;
 
-
-    /**是否允许刷新的时候，界面滚动*/
-    protected boolean mEnableScrollOnReFresh=false;
-
-    protected int mInterceptTouchDownX = -1;
-    protected int mInterceptTouchDownY = -1;
-    protected float mRefreshDownY = -1;
-    protected float mRefreshDownX = -1;
-    protected int mTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
+    protected final int mTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
 
     public HTBaseRecyclerView(Context context) {
         this(context, null, 0);
@@ -103,7 +137,7 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
         super(context);
         //创建界面主要控件对象
         mRecyclerView = new RecyclerView(getContext(), attrs, defStyleAttr);//根据attrs创建RecyclerView控件
-        mRefreshContainerView = new LinearLayout(getContext());
+        mRefreshContainerView = new FrameLayout(getContext());
         mLoadMoreContainerView = new LinearLayout(getContext());
         //一些参数初始化
         initAttrs(attrs);
@@ -121,39 +155,17 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
     }
 
     private void initViews() {
-        setBackgroundResource(android.R.color.transparent);//设置背景透明
-        setOrientation(checkOrientationVertical() ? VERTICAL : HORIZONTAL); //设置整个界面布局的方向
-        mRefreshContainerView.setGravity(Gravity.CENTER);
-        mLoadMoreContainerView.setGravity(Gravity.CENTER);
-        mLoadMoreContainerView.setLayoutParams(new ViewGroup.LayoutParams(
-                checkOrientationVertical() ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT,
-                checkOrientationVertical() ? ViewGroup.LayoutParams.WRAP_CONTENT : ViewGroup.LayoutParams.MATCH_PARENT));
-
-        setRefreshViewLayoutParams(mRefreshContainerView);
-
         //设置RecyclerView的布局参数,由于是使用attrs创建RecyclerView,需要把一些参数重置
-        LinearLayout.LayoutParams lp = checkOrientationVertical() ? new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0) :
-                new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT);
-        mRecyclerView.setPadding(0, 0, 0, 0);
-        lp.rightMargin = 0;
-        lp.leftMargin = 0;
-        lp.topMargin = 0;
-        lp.bottomMargin = 0;
-        lp.weight = 1;
-        mRecyclerView.setLayoutParams(lp);
-        mRecyclerView.setBackgroundResource(android.R.color.transparent);
         mRecyclerView.setId(View.NO_ID);//Id值不能和attrs中的重复
         mRecyclerView.setOverScrollMode(View.OVER_SCROLL_NEVER);//去掉阴影
 
         //根据当前的方向进行布局
         removeAllViews();
-        if (mHTOrientation == Orientation.VERTICAL_UP || mHTOrientation == Orientation.HORIZONTAL_LEFT) {
-            addView(mRecyclerView);
-            addView(mRefreshContainerView);
-        } else {
-            addView(mRefreshContainerView);
-            addView(mRecyclerView);
-        }
+        mRecyclerView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        setViewLayoutParams(mRefreshContainerView);
+        setViewLayoutParams(mLoadMoreContainerView);
+        addView(mRecyclerView);
+        addView(mRefreshContainerView);
 
         //如果设置了全局的默认刷新样式,就初始化
         if (sViewHolderClass != null) {
@@ -186,19 +198,27 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
 
     private void initListeners() {
         //设置RecyclerView的的触摸监听,从而屏蔽刷新时滚动导致RecyclerView的bug
-        setRecyclerViewOnTouchListener();
+//        setRecyclerViewOnTouchListener();
         //设置RecyclerView的滚动监听
         setRecyclerViewOnScrollListener();
     }
 
-    /** 设置全局的刷新样式 */
+    /**
+     * 设置全局的刷新样式
+     */
     public static void setRefreshViewHolderClass(@NonNull Class<? extends HTBaseViewHolder> mViewHolderClass) {
         HTBaseRecyclerView.sViewHolderClass = mViewHolderClass;
     }
 
-    /** 设置刷新和加载更多的视图控件并初始化 */
+    /**
+     * 设置刷新和加载更多的视图控件并初始化
+     */
     public void setRefreshViewHolder(@NonNull HTBaseViewHolder refreshViewHolder) {
         mHTViewHolder = refreshViewHolder;
+        mHTViewHolderTracker = mHTViewHolder.getViewHolderTracker();
+        mHTViewHolderTracker.setOrientation(mHTOrientation);
+        mHTViewHolder.computeViewSize(checkOrientationVertical() ? VERTICAL : HORIZONTAL);
+
         resetRefreshViewHolderView();
         initRefreshView();
         initLoadMoreView();
@@ -218,20 +238,16 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
             if (refreshView.getParent() != null) {
                 ((ViewGroup) refreshView.getParent()).removeView(refreshView);
             }
-            //获取刷新控件的尺寸
-            int refreshHeaderViewSize = Utils.getItemViewSize(checkOrientationVertical() ? VERTICAL : HORIZONTAL, refreshView);
-            mMinRefreshViewPadding = -refreshHeaderViewSize;
-            mMaxRefreshViewPadding = (int) (refreshHeaderViewSize * mHTViewHolder.getSpringDistanceScale());
             int res = mHTViewHolder.getRefreshViewBackgroundResId();
             if (res != 0) {//默认背景透明
-                mRefreshContainerView.setBackgroundResource(res);
+                setBackgroundResource(res);
             } else {
-                mRefreshContainerView.setBackgroundResource(android.R.color.transparent);
+                setBackgroundResource(android.R.color.transparent);
             }
             mRefreshContainerView.removeAllViews();
-            setRefreshViewLayoutParams(refreshView);
+            setViewLayoutParams(refreshView);
             mRefreshContainerView.addView(refreshView);
-            hideRefreshView(true);
+//            hideRefreshView(true);
         }
         setRefreshUIChangeListener(mHTViewHolder);
     }
@@ -243,7 +259,6 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
             if (loadMoreView.getParent() != null) {
                 ((ViewGroup) loadMoreView.getParent()).removeView(loadMoreView);
             }
-            //获取加载更多控件的尺寸
             int res = mHTViewHolder.getLoadMoreViewBackgroundResId();
             if (res != 0) {//默认背景透明
                 mLoadMoreContainerView.setBackgroundResource(res);
@@ -251,14 +266,14 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
                 mLoadMoreContainerView.setBackgroundResource(android.R.color.transparent);
             }
             mLoadMoreContainerView.removeAllViews();
-            setRefreshViewLayoutParams(loadMoreView);
+            setViewLayoutParams(loadMoreView);
             mLoadMoreContainerView.addView(loadMoreView);
             hideLoadMoreView(true);
         }
         setLoadMoreUIChangeListener(mHTViewHolder);
     }
 
-    private void setRefreshViewLayoutParams(View view) {
+    private void setViewLayoutParams(View view) {
         if (view == null) return;
         ViewGroup.LayoutParams lp = view.getLayoutParams() == null ? new ViewGroup.LayoutParams(0, 0) : view.getLayoutParams();
         lp.width = checkOrientationVertical() ? LayoutParams.MATCH_PARENT : LayoutParams.WRAP_CONTENT;
@@ -266,50 +281,159 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
         view.setLayoutParams(lp);
     }
 
-    private boolean checkOrientationVertical() {
-        return mHTOrientation == Orientation.VERTICAL_UP || mHTOrientation == Orientation.VERTICAL_DOWN;
+    protected boolean checkOrientationVertical() {
+        return mHTOrientation == HTOrientation.VERTICAL_UP || mHTOrientation == HTOrientation.VERTICAL_DOWN;
+    }
+
+    protected boolean checkOrientationReverse() {
+        return mHTOrientation == HTOrientation.HORIZONTAL_LEFT || mHTOrientation == HTOrientation.VERTICAL_UP;
     }
 
 
-    /** 触发刷新的条件判断,是否可以在刷新方向上继续滚动 */
-    public boolean canChildScroll() {
+    private void checkChildren() {
+        final int childCount = getChildCount();
+        if (childCount > 2) {
+            throw new IllegalStateException("HTRefreshRecyclerView can only contains 2 children");
+        }
+    }
+
+    public void addView(View child) {
+        checkChildren();
+        super.addView(child);
+    }
+
+    public void addView(View child, int index) {
+        checkChildren();
+        super.addView(child, index);
+    }
+
+    public void addView(View child, int index, LayoutParams params) {
+        checkChildren();
+        super.addView(child, index, params);
+    }
+
+    public void addView(View child, LayoutParams params) {
+        checkChildren();
+        super.addView(child, params);
+    }
+
+    public void addView(View child, int width, int height) {
+        checkChildren();
+        super.addView(child, width, height);
+    }
+
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        if (mRefreshContainerView != null) {
+            measureChild(mRefreshContainerView, widthMeasureSpec, heightMeasureSpec);
+        }
+        if (mRecyclerView != null) {
+            measureChild(mRecyclerView, widthMeasureSpec, heightMeasureSpec);
+        }
+    }
+
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+//        super.onLayout(changed, l, t, r, b);
+        if (checkOrientationVertical()) {
+            layoutVertical(mHTOrientation == HTOrientation.VERTICAL_DOWN);
+        } else {
+            layoutHorizontal(mHTOrientation == HTOrientation.HORIZONTAL_RIGHT);
+        }
+    }
+
+
+    void layoutVertical(boolean isTop) {
+
+        int offset = mHTViewHolderTracker.getCurrentPos();
+        int size = mHTViewHolderTracker.getRefreshViewSize();
+
+        int paddingLeft = getPaddingLeft();
+        int paddingTop = getPaddingTop();
+
+        int left, top, right, bottom;
+
+        if (mRefreshContainerView != null) {
+            left = paddingLeft;
+            if (isTop) {
+                top = -(size - paddingTop - offset);
+            } else {
+                top = mRecyclerView.getMeasuredHeight() - offset;
+            }
+            right = left + mRefreshContainerView.getMeasuredWidth();
+            bottom = top + mRefreshContainerView.getMeasuredHeight();
+            mRefreshContainerView.layout(left, top, right, bottom);
+        }
+        if (mRecyclerView != null) {
+            left = paddingLeft;
+            if (isTop) {
+                top = paddingTop + offset;
+            } else {
+                top = paddingTop - offset;
+            }
+            right = left + mRecyclerView.getMeasuredWidth();
+            bottom = top + mRecyclerView.getMeasuredHeight();
+            mRecyclerView.layout(left, top, right, bottom);
+        }
+
+
+    }
+
+    void layoutHorizontal(boolean isLeft) {
+        int offset = mHTViewHolderTracker.getCurrentPos();
+        int size = mHTViewHolderTracker.getRefreshViewSize();
+
+        int paddingLeft = getPaddingLeft();
+        int paddingTop = getPaddingTop();
+
+        int left, top, right, bottom;
+        if (mRefreshContainerView != null) {
+            if (isLeft) {
+                left = -(size - paddingLeft - offset);
+            } else {
+                left = mRecyclerView.getMeasuredWidth() - offset;
+            }
+            top = paddingTop;
+            right = left + mRefreshContainerView.getMeasuredWidth();
+            bottom = top + mRefreshContainerView.getMeasuredHeight();
+            mRefreshContainerView.layout(left, top, right, bottom);
+        }
+        if (mRecyclerView != null) {
+            if (isLeft) {
+                left = paddingLeft + offset;
+            } else {
+                left = paddingLeft - offset;
+            }
+            top = paddingTop;
+            right = left + mRecyclerView.getMeasuredWidth();
+            bottom = top + mRecyclerView.getMeasuredHeight();
+            mRecyclerView.layout(left, top, right, bottom);
+        }
+    }
+
+
+    /**
+     * 触发刷新的条件判断,是否可以在刷新方向上继续滚动
+     */
+    public boolean checkChildScroll() {
         switch (mHTOrientation) {
-            case Orientation.VERTICAL_UP:
+            case HTOrientation.VERTICAL_UP:
                 return ViewCompat.canScrollVertically(mRecyclerView, 1);
-            case Orientation.VERTICAL_DOWN:
+            case HTOrientation.VERTICAL_DOWN:
                 return ViewCompat.canScrollVertically(mRecyclerView, -1);
-            case Orientation.HORIZONTAL_LEFT:
+            case HTOrientation.HORIZONTAL_LEFT:
                 return ViewCompat.canScrollHorizontally(mRecyclerView, 1);
-            case Orientation.HORIZONTAL_RIGHT:
-                return ViewCompat.canScrollVertically(mRecyclerView, -1);
+            case HTOrientation.HORIZONTAL_RIGHT:
+                return ViewCompat.canScrollHorizontally(mRecyclerView, -1);
             default:
                 return false;
         }
 
     }
 
-    /** 处理刷新控件状态变化 */
-    protected void processRefreshStatusChanged() {
-        if (mRefreshUIChangeListener == null) return;
-        switch (mRefreshStatus) {
-            case RefreshStatus.IDLE:
-                mRefreshUIChangeListener.onReset();
-                break;
-          /*  case RefreshStatus.PULL_DOWN:
-                mRefreshUIChangeListener.onRefreshStart();
-                break;*/
-            case RefreshStatus.RELEASE_TO_REFRESH:
-                mRefreshUIChangeListener.onReleaseToRefresh();
-                break;
-            case RefreshStatus.REFRESHING:
-                mRefreshUIChangeListener.onRefreshing();
-                break;
-            default:
-                break;
-        }
-    }
 
-    /** 处理刷新控件状态变化 */
+    /**
+     * 处理刷新控件状态变化
+     */
     protected void processLoadMoreStatusChanged() {
         if (mLoadMoreUIChangeListener == null) return;
         switch (mLoadMoreStatus) {
@@ -325,132 +449,30 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
     }
 
 
-    /** 显隐加载更多视图 */
+    /**
+     * 显隐加载更多视图
+     */
     public void hideLoadMoreView(boolean isHide) {
         if (mLoadMoreContainerView != null && mHTViewHolder != null) {
             int size = 0;
             if (isHide) {
-                size = -getLoadMoreSize();
+                size = -mHTViewHolderTracker.getLoadMoreSize();
             }
             switch (mHTOrientation) {
-                case Orientation.VERTICAL_DOWN:
+                case HTOrientation.VERTICAL_DOWN:
                     mLoadMoreContainerView.setPadding(0, 0, 0, isHide ? size : 0);
                     break;
-                case Orientation.VERTICAL_UP:
+                case HTOrientation.VERTICAL_UP:
                     mLoadMoreContainerView.setPadding(0, isHide ? size : 0, 0, 0);
                     break;
-                case Orientation.HORIZONTAL_LEFT:
+                case HTOrientation.HORIZONTAL_LEFT:
                     mLoadMoreContainerView.setPadding(isHide ? size : 0, 0, 0, 0);
                     break;
-                case Orientation.HORIZONTAL_RIGHT:
+                case HTOrientation.HORIZONTAL_RIGHT:
                     mLoadMoreContainerView.setPadding(0, 0, isHide ? size : 0, 0);
                     break;
             }
         }
-    }
-
-    protected int getLoadMoreSize() {
-        return Utils.getItemViewSize(checkOrientationVertical() ? VERTICAL : HORIZONTAL, mHTViewHolder.getLoadMoreView());
-    }
-
-    /** 显隐刷新视图 */
-    public void hideRefreshView(boolean isHide) {
-        switch (mHTOrientation) {
-            case Orientation.VERTICAL_DOWN:
-                mRefreshContainerView.setPadding(0, isHide ? mMinRefreshViewPadding : 0, 0, 0);
-                break;
-            case Orientation.VERTICAL_UP:
-                mRefreshContainerView.setPadding(0, 0, 0, isHide ? mMinRefreshViewPadding : 0);
-                break;
-            case Orientation.HORIZONTAL_LEFT:
-                mRefreshContainerView.setPadding(0, 0, isHide ? mMinRefreshViewPadding : 0, 0);
-                break;
-            case Orientation.HORIZONTAL_RIGHT:
-                mRefreshContainerView.setPadding(isHide ? mMinRefreshViewPadding : 0, 0, 0, 0);
-                break;
-        }
-    }
-
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (shouldHandleRefresh()) {//达到刷新条件的时候,防止RecyclerView在底层禁止掉父view的拦截事件,从而导致的无法滑动
-            requestDisallowInterceptTouchEvent(false);
-        }
-        return super.dispatchTouchEvent(ev);
-    }
-
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent event) {
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                mInterceptTouchDownX = (int) event.getX();
-                mInterceptTouchDownY = (int) event.getY();
-                break;
-            case MotionEvent.ACTION_MOVE:
-                if (mLoadMoreStatus != LoadMoreStatus.LOADING && mRefreshStatus != RefreshStatus.REFRESHING) {
-                    boolean intercept;
-                    int interceptTouchMoveDistanceX = (int) (event.getX() - mInterceptTouchDownX);
-                    int interceptTouchMoveDistanceY = (int) (event.getY() - mInterceptTouchDownY);
-                    if (mHTOrientation == Orientation.VERTICAL_UP || mHTOrientation == Orientation.VERTICAL_DOWN) {
-                        if (mInterceptTouchDownY == -1) {
-                            mInterceptTouchDownY = (int) event.getY();
-                        }
-
-                        boolean up = mHTOrientation == Orientation.VERTICAL_UP && interceptTouchMoveDistanceY < -mTouchSlop;
-                        boolean down = mHTOrientation == Orientation.VERTICAL_DOWN && interceptTouchMoveDistanceY > mTouchSlop;
-                        intercept = (up || down) && Math.abs(interceptTouchMoveDistanceX) < Math.abs(interceptTouchMoveDistanceY);
-                    } else {
-                        if (mInterceptTouchDownX == -1) {
-                            mInterceptTouchDownX = (int) event.getX();
-                        }
-                        boolean left = mHTOrientation == Orientation.HORIZONTAL_LEFT && interceptTouchMoveDistanceX < -mTouchSlop;
-                        boolean right = mHTOrientation == Orientation.HORIZONTAL_RIGHT && interceptTouchMoveDistanceX > mTouchSlop;
-                        intercept = (left || right) && Math.abs(interceptTouchMoveDistanceX) > Math.abs(interceptTouchMoveDistanceY);
-                    }
-                    if (intercept && shouldHandleRefresh()) {
-                        event.setAction(MotionEvent.ACTION_CANCEL);//设置ACTION_CANCEL，使子控件取消按下状态
-                        super.onInterceptTouchEvent(event);
-                        return true;
-                    }
-                }
-                break;
-            case MotionEvent.ACTION_CANCEL:
-            case MotionEvent.ACTION_UP:
-                mInterceptTouchDownX = -1;
-                mInterceptTouchDownY = -1;
-                break;
-        }
-        return super.onInterceptTouchEvent(event);
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if (mHTViewHolder != null) {
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    mRefreshDownX = (int) event.getX();
-                    mRefreshDownY = (int) event.getY();
-                    break;
-                case MotionEvent.ACTION_MOVE:
-                    if (handleMoveAction(event)) {
-                        if (mRecyclerViewDragListener != null) {
-                            mRecyclerViewDragListener.onDragViewToRefresh();
-                        }
-                        return true;
-                    }
-                    break;
-                case MotionEvent.ACTION_CANCEL:
-                case MotionEvent.ACTION_UP:
-                    if (handleUpOrCancelAction(event)) {
-                        return true;
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-        return super.onTouchEvent(event);
     }
 
     @Override
@@ -483,7 +505,8 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
      * 禁止刷新的时候滑动列表
      * 避免 RecyclerView Bug：IndexOutOfBoundsException: Inconsistency detected. Invalid item position
      */
-    private void setRecyclerViewOnTouchListener() {
+
+ /*   private void setRecyclerViewOnTouchListener() {
         mRecyclerView.setOnTouchListener(
                 new View.OnTouchListener() {
                     @Override
@@ -492,14 +515,14 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
                     }
                 }
         );
-    }
+    }*/
 
     private void setRecyclerViewOnScrollListener() {
         mInnerScrollListener = new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 if (newState == RecyclerView.SCROLL_STATE_IDLE && shouldHandleLoadMore()) {
-                    startLoadMore();//停止滚动后触发加载更多
+                    performLoadMore();//停止滚动后触发加载更多
                 }
                 if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
                     if (mRecyclerViewDragListener != null) {
@@ -528,28 +551,39 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
         mRecyclerView.addOnScrollListener(mInnerScrollListener);
     }
 
-    /** 处理取消或手指抬起事件 */
-    protected abstract boolean handleUpOrCancelAction(MotionEvent event);
+    /**
+     * 处理手指移动事件
+     */
+    protected abstract Boolean handleMoveAction(MotionEvent event);
 
-    /** 处理手指移动事件 */
-    protected abstract boolean handleMoveAction(MotionEvent event);
-
-    /** 判断是否达到刷新条件 */
+    /**
+     * 判断是否达到刷新条件
+     */
     protected abstract boolean shouldHandleRefresh();
 
-    /** 判断是否达到加载更多条件 */
+    /**
+     * 判断是否达到加载更多条件
+     */
     protected abstract boolean shouldHandleLoadMore();
 
-    /** 开始刷新 */
-    protected abstract void startRefresh();
+    /**
+     * 开始刷新
+     */
+    protected abstract void performRefresh();
 
-    /** 开始加载更多 */
-    protected abstract void startLoadMore();
+    /**
+     * 开始加载更多
+     */
+    protected abstract void performLoadMore();
 
-    /** 结束刷新 */
+    /**
+     * 结束刷新
+     */
     protected abstract void endRefresh();
 
-    /** 结束加载更多 */
+    /**
+     * 结束加载更多
+     */
     protected abstract void endLoadMore();
 
     @Override
@@ -587,8 +621,8 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
 
     @Override
     public void setLayoutManager(RecyclerView.LayoutManager layoutManager) {
-        boolean reverse = mHTOrientation == Orientation.HORIZONTAL_LEFT || mHTOrientation == Orientation.VERTICAL_UP;
-        int orientation = getOrientation() == VERTICAL ? OrientationHelper.VERTICAL : OrientationHelper.HORIZONTAL;
+        boolean reverse = checkOrientationReverse();
+        int orientation = checkOrientationVertical() ? OrientationHelper.VERTICAL : OrientationHelper.HORIZONTAL;
         //根据当前的刷新方向,强行设置layoutManager的属性
         if (layoutManager instanceof GridLayoutManager) {
             GridLayoutManager realLayoutManager = (GridLayoutManager) layoutManager;
@@ -711,58 +745,59 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
         }
     }
 
-    /** 控件刷新方向定义 */
-    public static final class Orientation {
-        /** 垂直向上 */
-        public static final int VERTICAL_UP = 0;
-        /** 垂直向下 */
-        public static final int VERTICAL_DOWN = 1;
-        /** 水平向左 */
-        public static final int HORIZONTAL_LEFT = 2;
-        /** 水平向右 */
-        public static final int HORIZONTAL_RIGHT = 3;
-    }
-
-    /** 刷新状态定义 */
-    protected static class RefreshStatus {
+    /**
+     * 刷新状态定义
+     */
+    public static class RefreshStatus {
+        /**初始状态*/
         public static final int IDLE = 0;
-        public static final int PULL_DOWN = 1;
-        public static final int RELEASE_TO_REFRESH = 3;
-        public static final int REFRESHING = 4;
+        /**刷新准备状态*/
+        public static final int REFRESH_PREPARE = 1;
+        /**刷新状态*/
+        public static final int REFRESHING = 2;
+        /**刷新完成状态*/
+        public static final int COMPLETE = 3;
     }
 
-    /** 加载更多状态定义 */
-    protected static class LoadMoreStatus {
+    /**
+     * 加载更多状态定义
+     */
+    public static class LoadMoreStatus {
         public static final int IDLE = 0;
         public static final int LOADING = 1;
     }
 
-    /** 刷新控件中RecyclerView的滚动事件监听接口 */
+    /**
+     * 刷新控件中RecyclerView的滚动事件监听接口
+     */
     public interface OnScrollListener {
         void onScrollStateChanged(RecyclerView recyclerView, int newState);
 
         void onScrolled(RecyclerView recyclerView, int dx, int dy);
     }
 
-    /** 刷新监听接口,可以控制刷新视图在不同的阶段进行不同的操作 */
+    /**
+     * 刷新监听接口,可以控制刷新视图在不同的阶段进行不同的操作
+     */
     protected interface HTRefreshUIChangeListener {
-        /** 控件的刷新视图重置时回调 */
+        /**
+         * 控件的刷新视图重置时回调
+         */
         void onReset();
 
         /**
-         * 控件被拉动但未达到触发刷新的条件，并且手指没有移开，回调一次。由于控件的前一个状态可以是{@link RefreshStatus#IDLE}或者是
-         * {@link RefreshStatus#RELEASE_TO_REFRESH},因此不同的状态切换可能有不同的处理方式
-         * @param isPreStatusIdle 前一个状态是不是初始状态
+         * 控件被滑动情况下回调
          */
-        void onRefreshStart(boolean isPreStatusIdle);
+        void onRefreshPrepare();
 
-        /** 控件被拉动达到刷新条件，并且手指没有移开时回调一次。手指移开则立即触发刷新 */
-        void onReleaseToRefresh();
-
-        /** 控件即将处于刷新状态时回调 */
+        /**
+         * 控件处于刷新状态时回调
+         */
         void onRefreshing();
 
-        /** 控件刷新操作结束时回调 */
+        /**
+         * 控件刷新操作完成时回调
+         */
         void onRefreshComplete();
 
         /**
@@ -770,14 +805,19 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
          * 可以用于处理基于移动距离或者比值的视图动画操作等
          * @param scale        下拉过程0 到 1，回弹过程1 到 0
          * @param moveDistance 整个下拉刷新控件距离变化的值
+         * @param refreshStatus 下拉刷新状态，包含{@link RefreshStatus#IDLE}，{@link RefreshStatus#REFRESH_PREPARE}，{@link RefreshStatus#REFRESHING}，{@link RefreshStatus#COMPLETE}
+         * @param viewHolderTracker 刷新视图滑动数据跟踪，参见{@link HTViewHolderTracker}
          */
-        void onRefreshPositionChange(float scale, float moveDistance);
+        void onRefreshPositionChange(float scale, float moveDistance, int refreshStatus, HTViewHolderTracker viewHolderTracker);
     }
 
-    /** 加载更多监听接口 */
+    /**
+     * 加载更多监听接口
+     */
     protected interface HTLoadMoreUIChangeListener {
         /**
          * 控件触发加载更多时回调
+         *
          * @param hasMore 可以用于视图内容相关的逻辑处理
          */
         void onLoadMoreStart(boolean hasMore);
@@ -785,6 +825,7 @@ public abstract class HTBaseRecyclerView extends LinearLayout implements HTRefre
 
         /**
          * 控件加载更多操作完成时回调
+         *
          * @param hasMore 可以用于视图内容相关的逻辑处理
          */
         void onLoadMoreComplete(boolean hasMore);

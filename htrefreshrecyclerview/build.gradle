@@ -7,7 +7,6 @@ apply plugin: 'com.android.library'
 android {
     compileSdkVersion COMPILE_SDK_VERSION as int
     buildToolsVersion BUILD_TOOLS_VERSION as String
-    resourcePrefix "ne_" //自定义
     defaultConfig {
         vectorDrawables.useSupportLibrary = true
         minSdkVersion MIN_SDK_VERSION as int

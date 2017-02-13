@@ -4,8 +4,8 @@
   * LICENSE file in the root directory of this source tree.
   -->
 <resources>
-    <dimen name="default_height">40dp</dimen>
-    <dimen name="default_width">40dp</dimen>
+    <dimen name="default_height">60dp</dimen>
+    <dimen name="default_width">60dp</dimen>
     <dimen name="default_padding">5dp</dimen>
     <dimen name="default_space">5dp</dimen>
     <dimen name="default_text_line_height">20dp</dimen>

@@ -48,7 +48,7 @@ public class HorizontalLeftRefreshActivity extends AppCompatActivity implements 
         HTBaseViewHolder viewHolder = new DotStyleHorizontalLeftRefreshViewHolder(this);
 //        viewHolder.setLoadMoreViewBackgroundResId(android.R.color.holo_red_light);
 //        viewHolder.setRefreshViewBackgroundResId(android.R.color.holo_red_light);
-        mRefreshLayout.setRefreshViewHolder(viewHolder);//不设置样式,则使用默认箭头样式
+//        mRefreshLayout.setRefreshViewHolder(viewHolder);//不设置样式,则使用默认箭头样式
         RecyclerView.LayoutManager layoutManager;
         layoutManager = new LinearLayoutManager(this);
         // layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);//设置列表布局方式

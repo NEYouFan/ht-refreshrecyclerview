@@ -7,7 +7,9 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
 import com.netease.demo.R;
+import com.netease.hearttouch.htrefreshrecyclerview.base.HTBaseRecyclerView;
 import com.netease.hearttouch.htrefreshrecyclerview.base.HTBaseViewHolder;
+import com.netease.hearttouch.htrefreshrecyclerview.base.HTViewHolderTracker;
 import com.nineoldandroids.animation.ObjectAnimator;
 import com.nineoldandroids.animation.ValueAnimator;
 
@@ -27,8 +29,8 @@ public class DotStyleVerticalDownRefreshViewHolder extends HTBaseViewHolder {
         maxYValue = (int) ((mContext.getResources().getDimensionPixelSize(R.dimen.refresh_size) - mContext.getResources().getDimensionPixelSize(R.dimen.refresh_dot_size)) * 0.5);
         setLoadMoreViewBackgroundResId(android.R.color.holo_blue_light);
         setRefreshViewBackgroundResId(android.R.color.holo_blue_light);
-        setPullDistanceScale(3.0f);
-        setSpringDistanceScale(1.8f);
+        setPullDistanceScale(2.0f);
+        setSpringDistanceScale(1.0f);
 //        setAnimationTime(5000);
     }
 
@@ -55,12 +57,7 @@ public class DotStyleVerticalDownRefreshViewHolder extends HTBaseViewHolder {
     }
 
     @Override
-    public void onRefreshStart(boolean isPreStatusIdle) {
-
-    }
-
-    @Override
-    public void onReleaseToRefresh() {
+    public void onRefreshPrepare() {
 
     }
 
@@ -86,7 +83,8 @@ public class DotStyleVerticalDownRefreshViewHolder extends HTBaseViewHolder {
     }
 
     @Override
-    public void onRefreshPositionChange(float scale, float moveYDistance) {
+    public void onRefreshPositionChange(float scale, float moveYDistance, int refreshStatus, HTViewHolderTracker viewHolderTracker) {
+        if (refreshStatus != HTBaseRecyclerView.RefreshStatus.REFRESH_PREPARE) return;
         float diffY = moveYDistance + mRefreshLoadView.getY() - mRefreshView.getMeasuredHeight();
         if (diffY > 0) {
             diffY = diffY >= maxYValue ? maxYValue : diffY;

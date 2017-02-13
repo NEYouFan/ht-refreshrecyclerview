@@ -19,7 +19,7 @@
             style="?android:attr/progressBarStyle"
             android:layout_width="@dimen/default_arrow_width"
             android:layout_height="@dimen/default_arrow_height"
-            android:indeterminateDrawable="@drawable/refresh_loading_default"
+            android:indeterminateDrawable="@drawable/ht_refresh_loading_default"
             />
 
         <Space

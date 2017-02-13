@@ -7,6 +7,7 @@
     <string name="pull_to_refresh">拉动刷新</string>
     <string name="release_to_refresh">释放刷新</string>
     <string name="refresh">正在刷新</string>
+    <string name="refresh_complete">刷新完成</string>
     <string name="load_no_more">没有更多了</string>
     <string name="load_more">正在加载</string>
 </resources>

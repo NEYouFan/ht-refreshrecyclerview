@@ -16,15 +16,20 @@ import android.widget.FrameLayout;
 import com.netease.hearttouch.htrefreshrecyclerview.base.HTBaseRecyclerView;
 import com.netease.hearttouch.htrefreshrecyclerview.base.HTBaseViewHolder;
 import com.netease.hearttouch.htrefreshrecyclerview.base.HTRefreshRecyclerViewInterface;
-import com.netease.hearttouch.htrefreshrecyclerview.viewimpl.HTHorizontalRecyclerViewImpl;
-import com.netease.hearttouch.htrefreshrecyclerview.viewimpl.HTVerticalRecyclerViewImpl;
+import com.netease.hearttouch.htrefreshrecyclerview.base.HTOrientation;
+import com.netease.hearttouch.htrefreshrecyclerview.viewimpl.HTHorizontalLeftRecyclerViewImpl;
+import com.netease.hearttouch.htrefreshrecyclerview.viewimpl.HTHorizontalRightRecyclerViewImpl;
+import com.netease.hearttouch.htrefreshrecyclerview.viewimpl.HTVerticalDownRecyclerViewImpl;
+import com.netease.hearttouch.htrefreshrecyclerview.viewimpl.HTVerticalUpRecyclerViewImpl;
 
 /**
  * 用户真正需要使用的控件对象,内部采用代理模式
  */
 public class HTRefreshRecyclerView extends FrameLayout implements HTRefreshRecyclerViewInterface {
 
-    /** 刷新控件实现代理对象,根据用户配置生成 */
+    /**
+     * 刷新控件实现代理对象,根据用户配置生成
+     */
     private final HTRefreshRecyclerViewInterface mRecyclerViewProxy;
 
     public HTRefreshRecyclerView(Context context) {
@@ -40,20 +45,22 @@ public class HTRefreshRecyclerView extends FrameLayout implements HTRefreshRecyc
         removeAllViews();
         getOrientation(attrs);
         switch (getOrientation(attrs)) {//根据xml配置信息生成代理的刷新控件对象
-            case HTBaseRecyclerView.Orientation.HORIZONTAL_LEFT:
-            case HTBaseRecyclerView.Orientation.HORIZONTAL_RIGHT: {
-                mRecyclerViewProxy = new HTHorizontalRecyclerViewImpl(context, attrs, defStyleAttr);
+            case HTOrientation.HORIZONTAL_LEFT:
+                mRecyclerViewProxy = new HTHorizontalLeftRecyclerViewImpl(context, attrs, defStyleAttr);
                 break;
-            }
-            case HTBaseRecyclerView.Orientation.VERTICAL_UP:
-            case HTBaseRecyclerView.Orientation.VERTICAL_DOWN: {
-                mRecyclerViewProxy = new HTVerticalRecyclerViewImpl(context, attrs, defStyleAttr);
+            case HTOrientation.HORIZONTAL_RIGHT:
+                mRecyclerViewProxy = new HTHorizontalRightRecyclerViewImpl(context, attrs, defStyleAttr);
                 break;
-            }
-            default: {
-                mRecyclerViewProxy = new HTVerticalRecyclerViewImpl(context, attrs, defStyleAttr);
+            case HTOrientation.VERTICAL_UP:
+                mRecyclerViewProxy = new HTVerticalUpRecyclerViewImpl(context, attrs, defStyleAttr);
                 break;
-            }
+            case HTOrientation.VERTICAL_DOWN:
+                mRecyclerViewProxy = new HTVerticalDownRecyclerViewImpl(context, attrs, defStyleAttr);
+                break;
+            default:
+                mRecyclerViewProxy = new HTVerticalDownRecyclerViewImpl(context, attrs, defStyleAttr);
+                break;
+
         }
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
         addView((HTBaseRecyclerView) mRecyclerViewProxy, layoutParams);
@@ -69,7 +76,9 @@ public class HTRefreshRecyclerView extends FrameLayout implements HTRefreshRecyc
 
     }
 
-    /** 设置全局的刷新样式 */
+    /**
+     * 设置全局的刷新样式
+     */
     public static void setRefreshViewHolderClass(@NonNull Class<? extends HTBaseViewHolder> mViewHolderClass) {
         HTBaseRecyclerView.setRefreshViewHolderClass(mViewHolderClass);
     }

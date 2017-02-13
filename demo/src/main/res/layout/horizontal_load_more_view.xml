@@ -23,7 +23,7 @@
             style="?android:attr/progressBarStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:indeterminateDrawable="@drawable/refresh_loading_default"
+            android:indeterminateDrawable="@drawable/ht_refresh_loading_default"
             />
     </LinearLayout>
 

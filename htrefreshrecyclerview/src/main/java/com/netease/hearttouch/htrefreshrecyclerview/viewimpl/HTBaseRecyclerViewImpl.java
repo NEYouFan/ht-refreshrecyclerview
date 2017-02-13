@@ -12,9 +12,14 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
+import android.widget.Scroller;
 
 import com.netease.hearttouch.htrefreshrecyclerview.base.HTBaseRecyclerView;
+import com.netease.hearttouch.htrefreshrecyclerview.base.HTOrientation;
+import com.netease.hearttouch.htrefreshrecyclerview.base.HTViewHolderTracker;
 import com.netease.hearttouch.htrefreshrecyclerview.base.HTWrapperAdapter;
 import com.netease.hearttouch.htrefreshrecyclerview.utils.Utils;
 
@@ -24,12 +29,14 @@ import java.util.Arrays;
  * 实现的一种刷新基类
  */
 abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
-
     private boolean mScreenFilled;
     private int mStartPosition;
     private int mItemCount;
     protected ValueAnimator mLoadMoreAnimator;
-    protected ValueAnimator mRefreshAnimator;
+    protected ScrollJob mScrollJob;
+    protected MotionEvent mLastMoveEvent;
+    protected boolean mHasSendCancelEvent;
+    protected boolean mAutoRefresh;
 
     public HTBaseRecyclerViewImpl(Context context) {
         this(context, null);
@@ -48,10 +55,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
         if (mHTViewHolder == null || mHTViewHolder.getRefreshView() == null || mRefreshDelegate == null) {
             return false;
         }
-        if (mRecyclerView.getLayoutManager() == null || canChildScroll()) {
-            return false;
-        }
-        if (mLoadMoreStatus == LoadMoreStatus.LOADING || mRefreshStatus == RefreshStatus.REFRESHING) {
+        if (mRecyclerView.getLayoutManager() == null || mLoadMoreStatus != LoadMoreStatus.IDLE) {
             return false;
         }
         return true;
@@ -73,9 +77,9 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        changeLoadMoreViewPositionWithAnimation(-getLoadMoreSize(), null);
+                        changeLoadMoreViewPositionWithAnimation(-mHTViewHolderTracker.getLoadMoreSize(), null);
                     }
-                }, 200);
+                }, mHTViewHolder.getAnimationTime());
             }
             return false;
         }
@@ -93,6 +97,194 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
         int firstVisibleItem = Utils.getFirstItemPosition(manager, false);//获取第一个可见的Item位置
         return firstVisibleItem + manager.getChildCount() >= manager.getItemCount();
     }
+
+
+    public boolean defaultDispatchTouchEvent(MotionEvent event) {
+        return super.dispatchTouchEvent(event);
+    }
+
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (!isEnabled() || mRecyclerView == null || mRefreshContainerView == null) {
+            return defaultDispatchTouchEvent(event);
+        }
+
+        if (mRefreshStatus == RefreshStatus.REFRESHING && !mEnableScrollOnReFresh) {
+            return false;
+        }
+
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                mHTViewHolderTracker.onRelease();
+                if (mHTViewHolderTracker.hasLeftIdlePosition()) { //刷新视图不在初始位置
+                    onViewRelease();//释放
+                    if (mHTViewHolderTracker.hasMovedAfterPressedDown()) {
+                        sendCancelEvent();//通知子view不在处理事件
+                        return true;
+                    }
+                    return defaultDispatchTouchEvent(event);
+                } else {
+                    return defaultDispatchTouchEvent(event);
+                }
+
+            case MotionEvent.ACTION_DOWN:
+                mHasSendCancelEvent = false;
+                //记录按下的位置
+                mHTViewHolderTracker.onPressDown(event.getX(), event.getY());
+                //如果正在滚动，则立即终止
+                mScrollJob.abortIfWorking();
+                defaultDispatchTouchEvent(event);
+                return true;
+
+            case MotionEvent.ACTION_MOVE:
+                mLastMoveEvent = event; //记录事件，以方便模拟事件
+                mHTViewHolderTracker.onMove(event.getX(), event.getY());
+                Boolean handled = handleMoveAction(event);
+                if (handled != null) return handled;
+        }
+        return defaultDispatchTouchEvent(event);
+    }
+
+
+    protected void onViewRelease() {
+        tryToPerformRefresh();
+
+        if (mRefreshStatus == RefreshStatus.REFRESHING) {
+            if (mHTViewHolderTracker.isOverRefreshViewSize()) { //触发刷新后，需要保持刷新视图，将刷新视图滚动到对应的刷新位置
+                mScrollJob.tryToScrollTo(mHTViewHolderTracker.getRefreshViewSize(), mHTViewHolder.getAnimationTime());
+            }
+        } else {
+            if (mRefreshStatus == RefreshStatus.COMPLETE) {
+                notifyRefreshComplete();
+            } else {
+                tryScrollBackToOriginal();
+            }
+        }
+    }
+
+
+    protected void tryToPerformRefresh() {
+        if (mRefreshStatus != RefreshStatus.REFRESH_PREPARE) {
+            return;
+        }
+        //包含自动刷新
+        if ((mHTViewHolderTracker.isOverRefreshViewSize() && isAutoRefresh()) || mHTViewHolderTracker.isOverOffsetToRefresh()) {
+            mRefreshStatus = RefreshStatus.REFRESHING;
+            performRefresh();
+        }
+    }
+
+    protected void performRefresh() {
+        if (mRefreshUIChangeListener != null) {
+            mRefreshUIChangeListener.onRefreshing();
+            mRefreshDelegate.onRefresh();
+        }
+    }
+
+    protected void tryScrollBackToOriginal() {
+        if (!mHTViewHolderTracker.isUnderTouch()) {
+            mScrollJob.tryToScrollTo(HTViewHolderTracker.POSITION_IDLE, mHTViewHolder.getAnimationTime());
+        }
+    }
+
+    protected void notifyRefreshComplete() {
+        mRefreshUIChangeListener.onRefreshComplete();
+        mHTViewHolderTracker.onUIRefreshComplete();
+        tryScrollBackToOriginal();
+        reset();
+    }
+
+
+    protected boolean reset() {
+        if ((mRefreshStatus == RefreshStatus.COMPLETE || mRefreshStatus == RefreshStatus.REFRESH_PREPARE) && mHTViewHolderTracker.isIdlePosition()) {
+            mHTViewHolder.onReset();
+            mRefreshStatus = RefreshStatus.IDLE;
+            mAutoRefresh = false;
+            return true;
+        }
+        return false;
+    }
+
+    protected void sendCancelEvent() {
+        // The ScrollJob will update position and lead to send cancel event when mLastMoveEvent is null.
+        if (mLastMoveEvent == null) {
+            return;
+        }
+        MotionEvent last = mLastMoveEvent;
+        MotionEvent e = MotionEvent.obtain(last.getDownTime(), last.getEventTime() + ViewConfiguration.getLongPressTimeout(), MotionEvent.ACTION_CANCEL, last.getX(), last.getY(), last.getMetaState());
+        defaultDispatchTouchEvent(e);
+    }
+
+    protected void sendDownEvent() {
+        final MotionEvent last = mLastMoveEvent;
+        MotionEvent e = MotionEvent.obtain(last.getDownTime(), last.getEventTime(), MotionEvent.ACTION_DOWN, last.getX(), last.getY(), last.getMetaState());
+        defaultDispatchTouchEvent(e);
+    }
+
+    protected void onViewHolderScrollFinish() {
+        if (mHTViewHolderTracker.hasLeftIdlePosition() && isAutoRefresh()) {
+            onViewRelease();
+        }
+    }
+
+
+    protected void onViewHolderScrollAbort() {
+        if (mHTViewHolderTracker.hasLeftIdlePosition() && isAutoRefresh()) {
+            onViewRelease();
+        }
+    }
+
+    public boolean isAutoRefresh() {
+        return mAutoRefresh;
+    }
+
+    protected void updatePos(float offset) {
+        if ((offset < 0 && mHTViewHolderTracker.isIdlePosition())) {
+            return;
+        }
+        int to = mHTViewHolderTracker.getCurrentPos() + (int) offset;
+        if (mHTViewHolderTracker.isScrollOver(to)) {
+            to = HTViewHolderTracker.POSITION_IDLE;
+        }
+
+        mHTViewHolderTracker.setCurrentPos(to);
+        int change = to - mHTViewHolderTracker.getLastPos();
+        if (change == 0) {
+            return;
+        }
+
+        boolean isUnderTouch = mHTViewHolderTracker.isUnderTouch();
+        if (isUnderTouch && !mHasSendCancelEvent && mHTViewHolderTracker.hasMovedAfterPressedDown()) {
+            mHasSendCancelEvent = true;
+            sendCancelEvent();
+        }
+
+        if ((mHTViewHolderTracker.hasJustLeftIdlePosition() && mRefreshStatus == RefreshStatus.IDLE) /*||
+                (mHTViewHolderTracker.isOverCompletePos() && mRefreshStatus == RefreshStatus.COMPLETE)*/) {
+            mRefreshStatus = RefreshStatus.REFRESH_PREPARE;
+            mRefreshUIChangeListener.onRefreshPrepare();
+        }
+
+        // 回到初始位置
+        if (mHTViewHolderTracker.hasJustBackToIdlePosition()) {
+            reset();
+            if (isUnderTouch) {
+                sendDownEvent();
+            }
+        }
+        if (mRefreshStatus == RefreshStatus.REFRESH_PREPARE) {
+            if (mHTViewHolderTracker.hasJustReachedRefreshSizeFromIdle() && isAutoRefresh()) {
+                tryToPerformRefresh();
+            }
+        }
+
+        performUpdateViewPosition(change);//更新界面视图
+        mRefreshUIChangeListener.onRefreshPositionChange(mHTViewHolderTracker.getCurrentPercent(), mHTViewHolderTracker.getCurrentPos(), mRefreshStatus, mHTViewHolderTracker);
+    }
+
+    protected abstract void performUpdateViewPosition(int change);
 
 
     @Override
@@ -128,21 +320,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
     }
 
     @Override
-    protected void startRefresh() {
-        if (mRefreshStatus != RefreshStatus.REFRESHING && mRefreshDelegate != null && mHTViewHolder != null) {
-            mRefreshStatus = RefreshStatus.REFRESHING;
-            processRefreshStatusChanged();
-            mRefreshDelegate.onRefresh();
-            //将刷新控件显示到正确的位置
-            if (mRefreshStatus == RefreshStatus.REFRESHING) {
-                changeRefreshViewPositionWithAnimation(0, null);
-            }
-
-        }
-    }
-
-    @Override
-    protected void startLoadMore() {
+    protected void performLoadMore() {
         if (mLoadMoreStatus != LoadMoreStatus.LOADING && mLoadMoreDelegate != null && mHTViewHolder != null) {
             if (mHasMore) {
                 mLoadMoreStatus = LoadMoreStatus.LOADING;
@@ -157,29 +335,11 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
     @Override
     protected void endRefresh() {
         if (mRefreshStatus == RefreshStatus.REFRESHING && mRefreshDelegate != null && mHTViewHolder != null) {
-            mRefreshUIChangeListener.onRefreshComplete();
-            mRefreshStatus = RefreshStatus.IDLE;
-            changeRefreshViewPositionWithAnimation(mMinRefreshViewPadding, new Animator.AnimatorListener() {
-                @Override
-                public void onAnimationStart(Animator animation) {
-
-                }
-
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    processRefreshStatusChanged();
-                }
-
-                @Override
-                public void onAnimationCancel(Animator animation) {
-
-                }
-
-                @Override
-                public void onAnimationRepeat(Animator animation) {
-
-                }
-            });
+            mRefreshStatus = RefreshStatus.COMPLETE;
+            if (mScrollJob.isScrollRunning() && isAutoRefresh()) {
+                return;
+            }
+            notifyRefreshComplete();
         }
     }
 
@@ -192,7 +352,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
             if (mLoadMoreViewDisplay) {//一直显示没有更多提示
                 if (mScreenFilled) {
                     if (mHasMore) {//还有更多数据的时候,满一屏动画隐藏,否则直接隐藏
-                        changeLoadMoreViewPositionWithAnimation(-getLoadMoreSize(), null);
+                        changeLoadMoreViewPositionWithAnimation(-mHTViewHolderTracker.getLoadMoreSize(), null);
                     } else {
                         hideLoadMoreView(false);
                     }
@@ -201,7 +361,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 }
             } else {
                 if (mScreenFilled) {
-                    changeLoadMoreViewPositionWithAnimation(-getLoadMoreSize(), null);
+                    changeLoadMoreViewPositionWithAnimation(-mHTViewHolderTracker.getLoadMoreSize(), null);
                 } else {
                     hideLoadMoreView(true);
                 }
@@ -212,9 +372,11 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
     }
 
 
-    protected void stopRefreshPositionAnimation() {
-        if (mRefreshAnimator != null && mRefreshAnimator.isRunning()) {
-            mRefreshAnimator.cancel();
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if (mScrollJob != null) {
+            mScrollJob.destroy();
         }
     }
 
@@ -235,21 +397,28 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
 
     }
 
+
     @Override
     public void startAutoRefresh() {
+
         if (mRecyclerView != null && mHTViewHolder != null && mHTViewHolder.getRefreshView() != null) {
-            if (mRefreshStatus == RefreshStatus.REFRESHING || mLoadMoreStatus != LoadMoreStatus.IDLE || mRefreshDelegate == null) {
+            if (mRefreshStatus != RefreshStatus.IDLE || mLoadMoreStatus != LoadMoreStatus.IDLE || mRefreshDelegate == null) {
                 return;
             }
-            if (mRefreshAnimator != null && mRefreshAnimator.isRunning()
-                    || mLoadMoreAnimator != null && mLoadMoreAnimator.isRunning()) {
+            if (mScrollJob.isScrollRunning() || mLoadMoreAnimator != null && mLoadMoreAnimator.isRunning()) {
                 return;
             }
             RecyclerView.LayoutManager layoutManager = mRecyclerView.getLayoutManager();
             if (layoutManager != null && layoutManager.getItemCount() > 0) {
                 layoutManager.scrollToPosition(0);
-                mRefreshUIChangeListener.onRefreshPositionChange(1.0f, mMaxRefreshViewPadding);
-                startRefresh();
+                mRefreshStatus = RefreshStatus.REFRESH_PREPARE;
+                if (mRefreshUIChangeListener != null) {
+                    mRefreshUIChangeListener.onRefreshPrepare();
+                }
+                mScrollJob.tryToScrollTo(mHTViewHolderTracker.getOffsetToRefresh(), mHTViewHolder.getAnimationTime());
+                mRefreshStatus = RefreshStatus.REFRESHING;
+                performRefresh();
+                mAutoRefresh = true;
             }
         }
     }
@@ -257,17 +426,16 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
     @Override
     public void startAutoLoadMore() {
         if (mRecyclerView != null && mHTViewHolder != null && mHTWrapperAdapter != null && mHTWrapperAdapter.hasLoadMoreView()) {
-            if (mRefreshStatus != RefreshStatus.IDLE || mLoadMoreStatus == LoadMoreStatus.LOADING) {
+            if (mRefreshStatus != RefreshStatus.IDLE || mLoadMoreStatus != LoadMoreStatus.IDLE) {
                 return;
             }
-            if (mRefreshAnimator != null && mRefreshAnimator.isRunning()
-                    || mLoadMoreAnimator != null && mLoadMoreAnimator.isRunning()) {
+            if (mScrollJob.isScrollRunning() || mLoadMoreAnimator != null && mLoadMoreAnimator.isRunning()) {
                 return;
             }
             RecyclerView.LayoutManager layoutManager = mRecyclerView.getLayoutManager();
             if (layoutManager != null && layoutManager.getItemCount() > 0) {
                 layoutManager.smoothScrollToPosition(mRecyclerView, null, layoutManager.getItemCount() - 1);
-                startLoadMore();
+                performLoadMore();
             }
         }
     }
@@ -311,7 +479,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                         continue;//删除item时,因为pre-layout的原因,需要排除被删除的view
                     }
                     RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) child.getLayoutParams();
-                    columnSizes[j] += getOrientation() == VERTICAL ?
+                    columnSizes[j] += checkOrientationVertical() ?
                             layoutManager.getDecoratedMeasuredHeight(child) + lp.bottomMargin + lp.topMargin :
                             layoutManager.getDecoratedMeasuredWidth(child) + lp.leftMargin + lp.rightMargin;
                 }
@@ -326,54 +494,9 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
      * 在加载更多视图被attachToWindow之前,判断当前显示的内容是否达到显示加载更多的条件
      */
     public boolean isCurrentItemSizeOver(boolean includeLoadMore) {
-        int currentSize = getOrientation() == VERTICAL ? mRecyclerView.getMeasuredHeight() : mRecyclerView.getMeasuredWidth();
+        int currentSize = checkOrientationVertical() ? mRecyclerView.getMeasuredHeight() : mRecyclerView.getMeasuredWidth();
         boolean canScroll = calculateChildrenSize(includeLoadMore) >= currentSize;
         return mLoadMoreDelegate != null && mRefreshStatus != HTBaseRecyclerView.RefreshStatus.REFRESHING && canScroll;
-    }
-
-    /**
-     * 隐藏刷新控件带动画
-     */
-    protected void changeRefreshViewPositionWithAnimation(int targetPosition, @Nullable Animator.AnimatorListener animatorListener) {
-        int startValue = 0;
-        switch (mHTOrientation) {
-            case Orientation.VERTICAL_DOWN:
-                startValue = mRefreshContainerView.getPaddingTop();
-                break;
-            case Orientation.VERTICAL_UP:
-                startValue = mRefreshContainerView.getPaddingBottom();
-                break;
-            case Orientation.HORIZONTAL_LEFT:
-                startValue = mRefreshContainerView.getPaddingRight();
-                break;
-            case Orientation.HORIZONTAL_RIGHT:
-                startValue = mRefreshContainerView.getPaddingLeft();
-                break;
-        }
-        if (startValue < mMinRefreshViewPadding) {
-            return;
-        }
-        mRefreshAnimator = ValueAnimator.ofInt(startValue, targetPosition);
-        mRefreshAnimator.setDuration(mHTViewHolder.getAnimationTime());
-        mRefreshAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                int padding = (int) animation.getAnimatedValue();
-                updateRefreshView(padding);
-            }
-        });
-        if (animatorListener != null) {
-            mRefreshAnimator.addListener(animatorListener);
-        }
-        mRefreshAnimator.start();
-    }
-
-
-    protected void updateRefreshView(int padding) {
-        mRefreshContainerView.setPadding(mHTOrientation == Orientation.HORIZONTAL_RIGHT ? padding : 0,
-                mHTOrientation == Orientation.VERTICAL_DOWN ? padding : 0,
-                mHTOrientation == Orientation.HORIZONTAL_LEFT ? padding : 0,
-                mHTOrientation == Orientation.VERTICAL_UP ? padding : 0);
     }
 
     /**
@@ -382,20 +505,20 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
     protected void changeLoadMoreViewPositionWithAnimation(int targetPosition, @Nullable Animator.AnimatorListener animatorListener) {
         int startValue = 0;
         switch (mHTOrientation) {
-            case Orientation.VERTICAL_DOWN:
+            case HTOrientation.VERTICAL_DOWN:
                 startValue = mLoadMoreContainerView.getPaddingBottom();
                 break;
-            case Orientation.VERTICAL_UP:
+            case HTOrientation.VERTICAL_UP:
                 startValue = mLoadMoreContainerView.getPaddingTop();
                 break;
-            case Orientation.HORIZONTAL_LEFT:
+            case HTOrientation.HORIZONTAL_LEFT:
                 startValue = mLoadMoreContainerView.getPaddingLeft();
                 break;
-            case Orientation.HORIZONTAL_RIGHT:
+            case HTOrientation.HORIZONTAL_RIGHT:
                 startValue = mLoadMoreContainerView.getPaddingRight();
                 break;
         }
-        if (startValue <= -getLoadMoreSize()) return;
+        if (startValue <= -mHTViewHolderTracker.getLoadMoreSize()) return;
         mLoadMoreAnimator = ValueAnimator.ofInt(startValue, targetPosition);
         mLoadMoreAnimator.setDuration(mHTViewHolder.getAnimationTime());
         mLoadMoreAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -404,16 +527,70 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 int padding = (int) animation.getAnimatedValue();
 
                 mLoadMoreContainerView.setPadding(
-                        mHTOrientation == Orientation.HORIZONTAL_LEFT ? padding : 0,
-                        mHTOrientation == Orientation.VERTICAL_UP ? padding : 0,
-                        mHTOrientation == Orientation.HORIZONTAL_RIGHT ? padding : 0,
-                        mHTOrientation == Orientation.VERTICAL_DOWN ? padding : 0);
+                        mHTOrientation == HTOrientation.HORIZONTAL_LEFT ? padding : 0,
+                        mHTOrientation == HTOrientation.VERTICAL_UP ? padding : 0,
+                        mHTOrientation == HTOrientation.HORIZONTAL_RIGHT ? padding : 0,
+                        mHTOrientation == HTOrientation.VERTICAL_DOWN ? padding : 0);
             }
         });
         if (animatorListener != null) {
             mLoadMoreAnimator.addListener(animatorListener);
         }
         mLoadMoreAnimator.start();
+    }
+
+    abstract class ScrollJob implements Runnable {
+
+        int mLastFlingXY;
+        Scroller mScroller;
+        boolean mScrollRunning = false;
+        int mStartPos;
+        int mTargetPos;
+
+        public ScrollJob() {
+            mScroller = new Scroller(getContext());
+        }
+
+        public void run() {
+            boolean finish = !mScroller.computeScrollOffset() || mScroller.isFinished();
+            handleScroll(finish);
+        }
+
+        abstract void handleScroll(boolean isFinish);
+
+        void finish() {
+            reset();
+            onViewHolderScrollFinish();
+        }
+
+        void reset() {
+            mScrollRunning = false;
+            mLastFlingXY = 0;
+            removeCallbacks(this);
+        }
+
+        void destroy() {
+            reset();
+            if (!mScroller.isFinished()) {
+                mScroller.forceFinished(true);
+            }
+        }
+
+        boolean isScrollRunning() {
+            return mScrollRunning;
+        }
+
+        void abortIfWorking() {
+            if (mScrollRunning) {
+                if (!mScroller.isFinished()) {
+                    mScroller.forceFinished(true);
+                }
+                onViewHolderScrollAbort();
+                reset();
+            }
+        }
+
+        abstract void tryToScrollTo(int to, int duration);
     }
 
 }
