@@ -14,8 +14,8 @@ public interface HTRecyclerViewDragListener {
      * 拖拽列表滚动事件监听,是基于RecyclerView.OnScrollListener()事件;<br/>
      * 如果实现该接口,不用再重复添加RecyclerView.OnScrollListener()事件来监听列表拖拽事件
      */
-    void onDragViewToScroll();
+    void onRecyclerViewScroll();
 
-    /** 拖拽触发刷新事件监听 */
-    void onDragViewToRefresh();
+    /** 刷新视图位置准备开始变化 */
+    void onRefreshViewPrepareToMove();
 }

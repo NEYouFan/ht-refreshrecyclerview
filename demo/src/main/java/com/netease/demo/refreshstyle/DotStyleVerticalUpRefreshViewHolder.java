@@ -85,7 +85,9 @@ public class DotStyleVerticalUpRefreshViewHolder extends HTBaseViewHolder {
 
     @Override
     public void onRefreshPositionChange(float scale, float moveYDistance, int refreshStatus, HTViewHolderTracker viewHolderTracker) {
-        if (refreshStatus != HTBaseRecyclerView.RefreshStatus.REFRESH_PREPARE) return;
+        if (refreshStatus != HTBaseRecyclerView.RefreshStatus.REFRESH_PREPARE || viewHolderTracker.hasJustLeftIdlePosition()) {
+            return;
+        }
         float diffY = moveYDistance - mRefreshLoadView.getY() - mRefreshLoadView.getMeasuredHeight();
         if (diffY > 0) {
             diffY = diffY >= maxYValue ? maxYValue : diffY;

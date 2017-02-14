@@ -265,6 +265,9 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 (mHTViewHolderTracker.isOverCompletePos() && mRefreshStatus == RefreshStatus.COMPLETE)*/) {
             mRefreshStatus = RefreshStatus.REFRESH_PREPARE;
             mRefreshUIChangeListener.onRefreshPrepare();
+            if(mRecyclerViewDragListener!=null){
+                mRecyclerViewDragListener.onRefreshViewPrepareToMove();
+            }
         }
 
         // 回到初始位置
@@ -400,7 +403,6 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
 
     @Override
     public void startAutoRefresh() {
-
         if (mRecyclerView != null && mHTViewHolder != null && mHTViewHolder.getRefreshView() != null) {
             if (mRefreshStatus != RefreshStatus.IDLE || mLoadMoreStatus != LoadMoreStatus.IDLE || mRefreshDelegate == null) {
                 return;
@@ -414,6 +416,9 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 mRefreshStatus = RefreshStatus.REFRESH_PREPARE;
                 if (mRefreshUIChangeListener != null) {
                     mRefreshUIChangeListener.onRefreshPrepare();
+                }
+                if(mRecyclerViewDragListener!=null){
+                    mRecyclerViewDragListener.onRefreshViewPrepareToMove();
                 }
                 mScrollJob.tryToScrollTo(mHTViewHolderTracker.getOffsetToRefresh(), mHTViewHolder.getAnimationTime());
                 mRefreshStatus = RefreshStatus.REFRESHING;

@@ -42,7 +42,6 @@ public class HTHorizontalLeftRecyclerViewImpl extends HTHorizontalRecyclerViewIm
         boolean moveLeft = offsetX < 0;
         boolean canMoveRight = mHTViewHolderTracker.hasLeftIdlePosition();
 
-        // disable move when header not reach top
         if (moveLeft && checkChildScroll()) {
             return defaultDispatchTouchEvent(event);
         }

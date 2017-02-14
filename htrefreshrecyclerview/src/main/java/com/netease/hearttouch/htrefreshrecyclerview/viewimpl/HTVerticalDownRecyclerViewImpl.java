@@ -30,8 +30,6 @@ public class HTVerticalDownRecyclerViewImpl extends HTVerticalRecyclerViewImpl {
 
     @Override
     public Boolean handleMoveAction(MotionEvent event) {
-
-
         float offsetX = mHTViewHolderTracker.getOffsetX();
         float offsetY = mHTViewHolderTracker.getRealOffsetXY();
         //如果X轴方向移动
@@ -44,7 +42,6 @@ public class HTVerticalDownRecyclerViewImpl extends HTVerticalRecyclerViewImpl {
         boolean moveUp = offsetY < 0;
         boolean canMoveUp = mHTViewHolderTracker.hasLeftIdlePosition();
 
-        // disable move when header not reach top
         if (moveDown && checkChildScroll()) {
             return defaultDispatchTouchEvent(event);
         }
@@ -53,7 +50,6 @@ public class HTVerticalDownRecyclerViewImpl extends HTVerticalRecyclerViewImpl {
             updatePos(mHTViewHolderTracker.getOffsetY());//传递PULL_DISTANCE_SCALE计算之后的offset
             return true;
         }
-
         return null;
     }
 

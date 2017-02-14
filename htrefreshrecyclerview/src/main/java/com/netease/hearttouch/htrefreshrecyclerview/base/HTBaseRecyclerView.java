@@ -96,7 +96,7 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
     /**
      * 刷新控件拖拽监听
      */
-    private HTRecyclerViewDragListener mRecyclerViewDragListener;
+    protected HTRecyclerViewDragListener mRecyclerViewDragListener;
     /**
      * 加载更多状态枚举值
      */
@@ -526,7 +526,7 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
                 }
                 if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
                     if (mRecyclerViewDragListener != null) {
-                        mRecyclerViewDragListener.onDragViewToScroll();
+                        mRecyclerViewDragListener.onRecyclerViewScroll();
                     }
                 }
                 for (int i = mScrollListeners.size() - 1; i >= 0; i--) {
