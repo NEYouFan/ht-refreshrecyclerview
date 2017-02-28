@@ -7,7 +7,10 @@ package com.netease.hearttouch.htrefreshrecyclerview.base;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -35,6 +38,8 @@ import java.util.ArrayList;
 
 import static android.widget.LinearLayout.HORIZONTAL;
 import static android.widget.LinearLayout.VERTICAL;
+import static com.netease.hearttouch.htrefreshrecyclerview.base.HTOrientation.VERTICAL_DOWN;
+import static com.netease.hearttouch.htrefreshrecyclerview.base.HTOrientation.VERTICAL_UP;
 
 /**
  * 刷新控件基类
@@ -108,7 +113,7 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
     /**
      * 控件的刷新方向枚举值,默认垂直向下方向
      */
-    protected int mHTOrientation = HTOrientation.VERTICAL_DOWN;
+    protected int mHTOrientation = VERTICAL_DOWN;
     /**
      * 标示加载更多的数据状态
      */
@@ -125,6 +130,9 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
 
     protected final int mTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
 
+    private Paint mRefreshBgPaint;
+
+
     public HTBaseRecyclerView(Context context) {
         this(context, null, 0);
     }
@@ -135,14 +143,24 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
 
     public HTBaseRecyclerView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context);
+        setWillNotDraw(false);
         //创建界面主要控件对象
         mRecyclerView = new RecyclerView(getContext(), attrs, defStyleAttr);//根据attrs创建RecyclerView控件
         mRefreshContainerView = new FrameLayout(getContext());
         mLoadMoreContainerView = new LinearLayout(getContext());
         //一些参数初始化
+        initRefreshBgPaint(context);
         initAttrs(attrs);
         initViews();
     }
+
+    private void initRefreshBgPaint(Context context) {
+        mRefreshBgPaint = new Paint();
+        mRefreshBgPaint.setColor(ContextCompat.getColor(context, android.R.color.transparent));
+        mRefreshBgPaint.setStyle(Paint.Style.FILL);
+        mRefreshBgPaint.setAntiAlias(true);
+    }
+
 
     private void initAttrs(AttributeSet attrs) {
         if (attrs == null) return;
@@ -240,9 +258,9 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
             }
             int res = mHTViewHolder.getRefreshViewBackgroundResId();
             if (res != 0) {//默认背景透明
-                setBackgroundResource(res);
+                mRefreshContainerView.setBackgroundResource(res);
             } else {
-                setBackgroundResource(android.R.color.transparent);
+                mRefreshContainerView.setBackgroundResource(android.R.color.transparent);
             }
             mRefreshContainerView.removeAllViews();
             setViewLayoutParams(refreshView);
@@ -282,11 +300,11 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
     }
 
     protected boolean checkOrientationVertical() {
-        return mHTOrientation == HTOrientation.VERTICAL_UP || mHTOrientation == HTOrientation.VERTICAL_DOWN;
+        return mHTOrientation == VERTICAL_UP || mHTOrientation == VERTICAL_DOWN;
     }
 
     protected boolean checkOrientationReverse() {
-        return mHTOrientation == HTOrientation.HORIZONTAL_LEFT || mHTOrientation == HTOrientation.VERTICAL_UP;
+        return mHTOrientation == HTOrientation.HORIZONTAL_LEFT || mHTOrientation == VERTICAL_UP;
     }
 
 
@@ -335,15 +353,36 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
 //        super.onLayout(changed, l, t, r, b);
         if (checkOrientationVertical()) {
-            layoutVertical(mHTOrientation == HTOrientation.VERTICAL_DOWN);
+            layoutVertical(mHTOrientation == VERTICAL_DOWN);
         } else {
             layoutHorizontal(mHTOrientation == HTOrientation.HORIZONTAL_RIGHT);
         }
     }
 
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        if (mHTViewHolderTracker.isOverRefreshViewSize() && mHTViewHolder.getRefreshViewBackgroundResId() > 0) {
+            int drawOffset = Math.abs(mHTViewHolderTracker.getCurrentPos() - mHTViewHolderTracker.getRefreshViewSize());
+            mRefreshBgPaint.setColor(ContextCompat.getColor(getContext(), mHTViewHolder.getRefreshViewBackgroundResId()));
+            switch (mHTOrientation) {
+                case VERTICAL_DOWN:
+                    canvas.drawRect(0, 0, getWidth(), drawOffset, mRefreshBgPaint);
+                    break;
+                case HTOrientation.VERTICAL_UP:
+                    canvas.drawRect(0, getHeight() - drawOffset, getWidth(), getHeight(), mRefreshBgPaint);
+                    break;
+                case HTOrientation.HORIZONTAL_RIGHT:
+                    canvas.drawRect(0, 0, drawOffset, getHeight(), mRefreshBgPaint);
+                    break;
+                case HTOrientation.HORIZONTAL_LEFT:
+                    canvas.drawRect(getWidth() - drawOffset, 0, getWidth(), getHeight(), mRefreshBgPaint);
+                    break;
+            }
+
+        }
+    }
 
     void layoutVertical(boolean isTop) {
-
         int offset = mHTViewHolderTracker.getCurrentPos();
         int size = mHTViewHolderTracker.getRefreshViewSize();
 
@@ -416,9 +455,9 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
      */
     public boolean checkChildScroll() {
         switch (mHTOrientation) {
-            case HTOrientation.VERTICAL_UP:
+            case VERTICAL_UP:
                 return ViewCompat.canScrollVertically(mRecyclerView, 1);
-            case HTOrientation.VERTICAL_DOWN:
+            case VERTICAL_DOWN:
                 return ViewCompat.canScrollVertically(mRecyclerView, -1);
             case HTOrientation.HORIZONTAL_LEFT:
                 return ViewCompat.canScrollHorizontally(mRecyclerView, 1);
@@ -459,10 +498,10 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
                 size = -mHTViewHolderTracker.getLoadMoreSize();
             }
             switch (mHTOrientation) {
-                case HTOrientation.VERTICAL_DOWN:
+                case VERTICAL_DOWN:
                     mLoadMoreContainerView.setPadding(0, 0, 0, isHide ? size : 0);
                     break;
-                case HTOrientation.VERTICAL_UP:
+                case VERTICAL_UP:
                     mLoadMoreContainerView.setPadding(0, isHide ? size : 0, 0, 0);
                     break;
                 case HTOrientation.HORIZONTAL_LEFT:
@@ -516,7 +555,6 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
                 }
         );
     }*/
-
     private void setRecyclerViewOnScrollListener() {
         mInnerScrollListener = new RecyclerView.OnScrollListener() {
             @Override
@@ -749,13 +787,21 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
      * 刷新状态定义
      */
     public static class RefreshStatus {
-        /**初始状态*/
+        /**
+         * 初始状态
+         */
         public static final int IDLE = 0;
-        /**刷新准备状态*/
+        /**
+         * 刷新准备状态
+         */
         public static final int REFRESH_PREPARE = 1;
-        /**刷新状态*/
+        /**
+         * 刷新状态
+         */
         public static final int REFRESHING = 2;
-        /**刷新完成状态*/
+        /**
+         * 刷新完成状态
+         */
         public static final int COMPLETE = 3;
     }
 
@@ -803,9 +849,10 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
         /**
          * 控件刷新视图可见时(非{@link RefreshStatus#IDLE}和{@link RefreshStatus#REFRESHING})回调，
          * 可以用于处理基于移动距离或者比值的视图动画操作等
-         * @param scale        下拉过程0 到 1，回弹过程1 到 0
-         * @param moveDistance 整个下拉刷新控件距离变化的值
-         * @param refreshStatus 下拉刷新状态，包含{@link RefreshStatus#IDLE}，{@link RefreshStatus#REFRESH_PREPARE}，{@link RefreshStatus#REFRESHING}，{@link RefreshStatus#COMPLETE}
+         *
+         * @param scale             下拉过程0 到 1，回弹过程1 到 0
+         * @param moveDistance      整个下拉刷新控件距离变化的值
+         * @param refreshStatus     下拉刷新状态，包含{@link RefreshStatus#IDLE}，{@link RefreshStatus#REFRESH_PREPARE}，{@link RefreshStatus#REFRESHING}，{@link RefreshStatus#COMPLETE}
          * @param viewHolderTracker 刷新视图滑动数据跟踪，参见{@link HTViewHolderTracker}
          */
         void onRefreshPositionChange(float scale, float moveDistance, int refreshStatus, HTViewHolderTracker viewHolderTracker);

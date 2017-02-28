@@ -7,15 +7,15 @@
 #### 基本参数设置
 * 设置刷新视图和加载更多视图：
 >重写`onInitRefreshView()`和`onInitLoadMoreView()`方法设置视图。
-  
+
 * 刷新视图和加载更多视图背景色
 >使用`setRefreshViewBackgroundResId(int refreshViewBackgroundResId)`方法设置刷新视图的背景色；加载更多视图背景色方法为`setLoadMoreViewBackgroundResId(int loadMoreViewBackgroundResId)`。
-    
+
 * 手指移动距离和刷新控件移动距离比值
 >使用`setPullDistanceScale(float pullDistanceScale)` 方法设置，参数不对则抛出异常。默认比例值是`1.8f`。
 
-* 刷新控件的弹簧距离设置(最大可拉动的距离)
->刷新控件的弹簧距离通过设置与刷新控件的高度比例值进行限定，调用`setSpringDistanceScale(float springDistanceScale)` 方法设置，参数不对则抛出异常。默认比例值是`2.4f`。
+* 刷新控件的弹簧距离设置(触发刷新事件的距离)
+>刷新控件的弹簧距离通过设置与刷新控件的高度比例值进行限定，调用`setSpringDistanceScale(float springDistanceScale)` 方法设置，参数不对则抛出异常。默认比例值是`1.0f`。
 
 * 动画时间设置
 >使用`setAnimationTime(int animationTime)`设置刷新中动画执行时间，参数不对则抛出异常。默认时间是`500ms`。
@@ -25,22 +25,20 @@
 
 ###### HTRefreshUIChangeListener
 * `onReset()`
-> 控件的刷新视图重置时回调。    
+> 控件的刷新视图重置时回调。
 
-* `onRefreshStart(boolean isPreStatusIdle)`
-> 控件被拉动但未达到触发刷新的条件，并且手指没有移开时回调一次。由于控件的前一个状态可以是`RefreshStatus.IDLE`或者是`RefreshStatus.RELEASE_TO_REFRESH`，因此不同的状态切换可能有不同的处理方式，用`isPreStatusIdle`标示。
+* `onRefreshPrepare()`
+> 刷新视图移动时回调。
 
-* `onReleaseToRefresh()`
-> 控件被拉动达到刷新条件，并且手指没有移开时回调一次。手指移开则立即触发刷新。
-
-* `onRefreshing()`  
-> 控件即将处于刷新状态时回调。  
+* `onRefreshing()`
+> 控件即将处于刷新状态时回调。
 
 * `onRefreshComplete()`
 > 控件刷新操作结束时回调。
 
-* `onRefreshPositionChange(float scale, float moveDistance)`
->控件的刷新视图可见时(非`RefreshStatus.IDLE`和`RefreshStatus.REFRESHING`状态)回调，可以用于处理基于移动距离或者比值的视图动画操作等。`scale`的变化范围为`0~1.0f`(达到触发刷新条件以后，继续拉动，也保持`1.0f`，和`moveDistance`不同)； `moveDistance`代表刷新控件移动距离的值。
+* `onRefreshPositionChange(float scale, float moveDistance, int refreshStatus, HTViewHolderTracker viewHolderTracker)`
+>刷新视图产生位移时回调，可以用于处理基于移动距离或者比值的视图动画操作等。
+>参数：`scale`的变化范围为`0~1.0f`(达到触发刷新条件以后，继续拉动，也保持`1.0f`)； `moveDistance`代表刷新控件移动距离的值(与`PULL_DISTANCE_SCALE`计算之后的距离)；`refreshStatus`表示当前的刷新状态（其值是`RefreshStatus`类内，如`IDLE`、`REFRESH_PREPARE`、`REFRESHING`、`COMPLETE`）；`viewHolderTracker`用来记录刷新视图的位移数据，可参考[HTViewHolderTracker](https://github.com/NEYouFan/ht-refreshrecyclerview/blob/master/htrefreshrecyclerview/src/main/java/com/netease/hearttouch/htrefreshrecyclerview/base/HTViewHolderTracker.java)。
 
 ###### HTLoadMoreUIChangeListener
 * `onLoadMoreStart(boolean hasMore)`
@@ -55,6 +53,7 @@
 #### HTRefreshRecyclerView的常用方法
 `HTRefreshRecyclerView`是基于`RecyclerView`实现的控件，一些常用方法和`RecyclerView`保持统一（暂时只提供常用的一些方法），如`setAdapter()`和`setLayoutManager()`方法等，这里就不做详细介绍了。
 ##### 其他常用的自定义方法
+* `setEnableScrollOnRefresh(boolean enableScrollOnReFresh)`，设置是否允许刷新的时候，界面滚动
 * `setRefreshCompleted(boolean hasMore)`，设置刷新操作完成
 * `startAutoRefresh()`，触发自动刷新,刷新状态的视图可见
 * `startAutoLoadMore()`，触发自动加载更多,加载更多状态的视图可见
@@ -85,11 +84,11 @@
 ##### HTRecyclerViewDragListener
 `HTRecyclerViewDragListener`是控件在刷新方向上的拖拽事件监听接口，如果用户希望控件在拉动刷新或者拖拽列表滚动的时候进行相关操作，需要实现该接口。
 
-* `onDragViewToRefresh()`    
-> 在控件刷新方向上拖拽以触发刷新事件时回调。
+* `onRefreshViewPrepareToMove()`    
+> 刷新视图产生位移时回调。
 
-* `onDragViewToScroll()`    
+* `onRecyclerViewScroll()`    
 > 在控件刷新方向上拖拽使列表滚动时回调。该方法基于`RecyclerView.OnScrollListener()`事件实现，如果已经实现该接口,不用再重复添加`RecyclerView.OnScrollListener()`事件来监听列表拖拽事件。
-   
+      
    
 
