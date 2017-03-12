@@ -27,7 +27,6 @@ public class DotStyleHorizontalLeftRefreshViewHolder extends HTBaseViewHolder {
     public DotStyleHorizontalLeftRefreshViewHolder(Context context) {
         super(context);
         maxXValue = (int) ((mContext.getResources().getDimensionPixelSize(R.dimen.refresh_size) - mContext.getResources().getDimensionPixelSize(R.dimen.refresh_dot_size)) * 0.5);
-        setLoadMoreViewBackgroundResId(android.R.color.holo_blue_light);
         setRefreshViewBackgroundResId(android.R.color.holo_blue_light);
         setPullDistanceScale(2.0f);
         setSpringDistanceScale(1.0f);
@@ -35,16 +34,15 @@ public class DotStyleHorizontalLeftRefreshViewHolder extends HTBaseViewHolder {
 
     }
 
-    @Override
-    public View onInitRefreshView() {
-        View refreshView = View.inflate(mContext, R.layout.horizontal_refresh_view, null);
+    public View onInitRefreshView(ViewGroup parent) {
+        View refreshView = View.inflate(mContext, R.layout.horizontal_refresh_view, parent);
         mRefreshLoadView = (ViewGroup) refreshView.findViewById(R.id.refresh);
         return refreshView;
     }
 
-    @Override
-    public View onInitLoadMoreView() {
-        View loadMoreView = View.inflate(mContext, R.layout.horizontal_load_more_view, null);
+
+    public View onInitLoadMoreView(ViewGroup parent) {
+        View loadMoreView = View.inflate(mContext, R.layout.horizontal_load_more_view, parent);
         mLoadMoreProgressBar = (ProgressBar) loadMoreView.findViewById(R.id.load_progress);
         vLoadMore = loadMoreView.findViewById(R.id.liner_loading);
         vNoMore = loadMoreView.findViewById(R.id.liner_no_more);

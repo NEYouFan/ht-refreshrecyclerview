@@ -6,7 +6,6 @@
 package com.netease.hearttouch.htrefreshrecyclerview.base;
 
 import android.content.Context;
-import android.support.annotation.IdRes;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -79,7 +78,7 @@ public abstract class HTBaseViewHolder implements HTBaseRecyclerView.HTLoadMoreU
      *
      * @param refreshViewBackgroundResId 背景色资源Id
      */
-    public void setRefreshViewBackgroundResId(@IdRes int refreshViewBackgroundResId) {
+    public void setRefreshViewBackgroundResId(int refreshViewBackgroundResId) {
         if (refreshViewBackgroundResId > 0) {
             mRefreshViewBackgroundResId = refreshViewBackgroundResId;
         }

@@ -1,15 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion COMPILE_SDK_VERSION as int
-    buildToolsVersion BUILD_TOOLS_VERSION as String
+    compileSdkVersion rootProject.compileSdkVersion
+    buildToolsVersion rootProject.buildToolsVersion
 
     defaultConfig {
         applicationId "com.netease.demo.htrefreshrecyclerview"
-        minSdkVersion MIN_SDK_VERSION as int
-        targetSdkVersion TARGET_SDK_VERSION as int
+        minSdkVersion rootProject.minSdkVersion
+        targetSdkVersion rootProject.targetSdkVersion
         versionCode 1
-        versionName VERSION_NAME as String
     }
     buildTypes {
         release {
@@ -22,8 +21,8 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.nineoldandroids:library:2.4.0'
-//    compile project(':htrefreshrecyclerview')
+    compile project(':htrefreshrecyclerview')
     compile 'com.nineoldandroids:library:2.4.0'
-    compile 'com.netease.hearttouch:ht-refreshrecyclerview:1.0.0'
+//    compile 'com.netease.hearttouch:ht-refreshrecyclerview:1.1.0'
 }
 
