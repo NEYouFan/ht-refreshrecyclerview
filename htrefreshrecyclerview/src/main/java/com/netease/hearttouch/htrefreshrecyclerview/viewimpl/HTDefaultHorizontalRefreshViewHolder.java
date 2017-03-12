@@ -6,6 +6,7 @@ package com.netease.hearttouch.htrefreshrecyclerview.viewimpl;
 
 import android.content.Context;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
@@ -15,7 +16,6 @@ import android.widget.TextView;
 import com.netease.hearttouch.htrefreshrecyclerview.R;
 import com.netease.hearttouch.htrefreshrecyclerview.base.HTBaseRecyclerView;
 import com.netease.hearttouch.htrefreshrecyclerview.base.HTBaseViewHolder;
-import com.netease.hearttouch.htrefreshrecyclerview.base.HTOrientation;
 import com.netease.hearttouch.htrefreshrecyclerview.base.HTViewHolderTracker;
 
 /**
@@ -45,9 +45,10 @@ public class HTDefaultHorizontalRefreshViewHolder extends HTBaseViewHolder {
         mRightAnim.setFillAfter(true);
     }
 
+
     @Override
-    public View onInitRefreshView() {
-        View refreshView = View.inflate(mContext, R.layout.ht_view_horizontal_refresh_default, null);
+    public View onInitRefreshView(ViewGroup parent) {
+        View refreshView = View.inflate(mContext, R.layout.ht_view_horizontal_refresh_default, parent);
         mTvRefreshStatus = (TextView) refreshView.findViewById(R.id.tv_refresh_status);
         mIvRefreshArrow = (ImageView) refreshView.findViewById(R.id.iv_refresh_arrow);
         mRefreshProgressBar = (ProgressBar) refreshView.findViewById(R.id.pb_loading);
@@ -55,10 +56,11 @@ public class HTDefaultHorizontalRefreshViewHolder extends HTBaseViewHolder {
     }
 
     @Override
-    public View onInitLoadMoreView() {
-        View loadMoreView = View.inflate(mContext, R.layout.ht_view_horizontal_load_more_default, null);
+    public View onInitLoadMoreView(ViewGroup parent) {
+        View loadMoreView = View.inflate(mContext, R.layout.ht_view_horizontal_load_more_default, parent);
         mVLoadMore = loadMoreView.findViewById(R.id.liner_loading);
         mVNoMore = loadMoreView.findViewById(R.id.tv_no_more);
+        setDefaultRefreshViewArrow();
         return loadMoreView;
     }
 
@@ -129,16 +131,12 @@ public class HTDefaultHorizontalRefreshViewHolder extends HTBaseViewHolder {
         }
     }
 
-    public void setDefaultRefreshViewArrow(int orientation) {
+    public void setDefaultRefreshViewArrow() {
         if (mIvRefreshArrow == null) return;
-        switch (orientation) {
-            case HTOrientation.HORIZONTAL_LEFT:
-                mIvRefreshArrow.setImageResource(R.drawable.ht_left_arrow_default);
-                break;
-            case HTOrientation.HORIZONTAL_RIGHT:
-            default:
-                mIvRefreshArrow.setImageResource(R.drawable.ht_right_arrow_default);
-                break;
+        if (mRecyclerView.checkOrientationReverse()) {
+            mIvRefreshArrow.setImageResource(R.drawable.ht_left_arrow_default);
+        } else {
+            mIvRefreshArrow.setImageResource(R.drawable.ht_right_arrow_default);
         }
     }
 }

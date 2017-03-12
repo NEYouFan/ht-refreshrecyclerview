@@ -6,12 +6,9 @@
 package com.netease.hearttouch.htrefreshrecyclerview.base;
 
 import android.content.Context;
+import android.support.annotation.IdRes;
 import android.view.View;
 import android.view.ViewGroup;
-
-import com.netease.hearttouch.htrefreshrecyclerview.utils.Utils;
-
-import static android.R.attr.orientation;
 
 /**
  * 刷新视图和加载更多视图的包裹基类,用户需要继承该类完成自定义视图样式
@@ -19,7 +16,6 @@ import static android.R.attr.orientation;
 public abstract class HTBaseViewHolder implements HTBaseRecyclerView.HTLoadMoreUIChangeListener, HTBaseRecyclerView.HTRefreshUIChangeListener {
 
     private static final int DEFAULT_ANIMATION_TIME = 500;
-    private static final int DEFAULT_VIEW_SIZE = 50;
 
     protected Context mContext;
     /**
@@ -30,14 +26,13 @@ public abstract class HTBaseViewHolder implements HTBaseRecyclerView.HTLoadMoreU
      * 加载更多视图对象
      */
     protected View mLoadMoreView;
+
+    protected HTBaseRecyclerView mRecyclerView;
     /**
      * 刷新视图的背景色
      */
     private int mRefreshViewBackgroundResId = 0;
-    /**
-     * 加载更多视图的背景色
-     */
-    private int mLoadMoreViewBackgroundResId = 0;
+
     /**
      * 动画时间，默认500ms
      */
@@ -45,46 +40,37 @@ public abstract class HTBaseViewHolder implements HTBaseRecyclerView.HTLoadMoreU
 
     private HTViewHolderTracker mViewHolderTracker;
 
-    private int mOrientation = 1;
-
     public HTBaseViewHolder(Context context) {
         mContext = context;
-        mRefreshView = onInitRefreshView();
-        mLoadMoreView = onInitLoadMoreView();
         mViewHolderTracker = new HTViewHolderTracker();
     }
 
-    /**
-     * 设置加载更多视图的背景色
-     *
-     * @param loadMoreViewBackgroundResId 背景色资源Id
-     */
-    public void setLoadMoreViewBackgroundResId(int loadMoreViewBackgroundResId) {
-        if (loadMoreViewBackgroundResId > 0) {
-            this.mLoadMoreViewBackgroundResId = loadMoreViewBackgroundResId;
-            if (mLoadMoreView != null) {
-                ViewGroup container = (ViewGroup) mLoadMoreView.getParent();
-                if (container != null) {
-                    container.setBackgroundResource(loadMoreViewBackgroundResId);
-                }
+
+    void setRecyclerView(HTBaseRecyclerView recyclerView, ViewGroup refreshViewParent, ViewGroup loadMoreViewParent) {
+        mRecyclerView = recyclerView;
+        View view = onInitRefreshView(refreshViewParent);
+        if (view != null) {
+            if (refreshViewParent.getChildCount() == 0) {
+                throw new IllegalArgumentException("the refresh view has not been attached to parent view !");
+            } else {
+                mRefreshView = refreshViewParent.getChildAt(0);
             }
         }
+        view = onInitLoadMoreView(loadMoreViewParent);
+        if (view != null) {
+            if (loadMoreViewParent.getChildCount() == 0) {
+                throw new IllegalArgumentException("the loadMore view has not been attached to parent view !");
+            } else {
+                mLoadMoreView = loadMoreViewParent.getChildAt(0);
+            }
+        }
+
     }
 
     protected void updateViewSize() {
-        computeViewSize(orientation);
-    }
-
-    /**
-     *  计算刷新视图和加载更多视图在刷新方向上的尺寸
-     * @param orientation
-     */
-    protected void computeViewSize(int orientation) {
-        mOrientation = orientation;
-        int refreshSize = mRefreshView == null ? 0 : Utils.getItemViewSize(orientation, mRefreshView);
-        int loadMoreSize = mRefreshView == null ? 0 : Utils.getItemViewSize(orientation, mLoadMoreView);
-        mViewHolderTracker.setRefreshViewSize(refreshSize == 0 ? DEFAULT_VIEW_SIZE : refreshSize);
-        mViewHolderTracker.setLoadMoreSize(loadMoreSize == 0 ? DEFAULT_VIEW_SIZE : loadMoreSize);
+        if (mRecyclerView != null) {
+            mRecyclerView.computeViewSize();
+        }
     }
 
 
@@ -93,23 +79,21 @@ public abstract class HTBaseViewHolder implements HTBaseRecyclerView.HTLoadMoreU
      *
      * @param refreshViewBackgroundResId 背景色资源Id
      */
-    public void setRefreshViewBackgroundResId(int refreshViewBackgroundResId) {
+    public void setRefreshViewBackgroundResId(@IdRes int refreshViewBackgroundResId) {
         if (refreshViewBackgroundResId > 0) {
             mRefreshViewBackgroundResId = refreshViewBackgroundResId;
-            if (mRefreshView != null) {
-                ViewGroup container = (ViewGroup) mRefreshView.getParent();
-                if (container != null) {
-                    container.setBackgroundResource(refreshViewBackgroundResId);
-                }
-            }
         }
     }
 
-
-    public HTViewHolderTracker getViewHolderTracker() {
+     HTViewHolderTracker getViewHolderTracker() {
         return mViewHolderTracker;
     }
 
+    void resetViewHolder() {
+        mRecyclerView = null;
+        mContext = null;
+        mViewHolderTracker = null;
+    }
 
     /**
      * 设置刷新和加载更多相关动画的执行时间
@@ -149,21 +133,17 @@ public abstract class HTBaseViewHolder implements HTBaseRecyclerView.HTLoadMoreU
     }
 
     /**
-     * 自定义的刷新视图
+     * 自定义的刷新视图添加到parent中
      */
-    public abstract View onInitRefreshView();
+    public abstract View onInitRefreshView(ViewGroup parent);
 
     /**
-     * 自定义的加载更多视图
+     * 自定义的加载更多视图添加到parent中
      */
-    public abstract View onInitLoadMoreView();
+    public abstract View onInitLoadMoreView(ViewGroup parent);
 
     public final int getAnimationTime() {
         return mAnimationTime;
-    }
-
-    public final int getLoadMoreViewBackgroundResId() {
-        return mLoadMoreViewBackgroundResId;
     }
 
     public final int getRefreshViewBackgroundResId() {
@@ -177,5 +157,4 @@ public abstract class HTBaseViewHolder implements HTBaseRecyclerView.HTLoadMoreU
     public final View getLoadMoreView() {
         return mLoadMoreView;
     }
-
 }

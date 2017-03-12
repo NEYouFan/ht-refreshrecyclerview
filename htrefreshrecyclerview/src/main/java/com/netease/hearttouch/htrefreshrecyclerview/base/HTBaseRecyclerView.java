@@ -29,6 +29,7 @@ import com.netease.hearttouch.htrefreshrecyclerview.HTLoadMoreListener;
 import com.netease.hearttouch.htrefreshrecyclerview.HTRecyclerViewDragListener;
 import com.netease.hearttouch.htrefreshrecyclerview.HTRefreshListener;
 import com.netease.hearttouch.htrefreshrecyclerview.R;
+import com.netease.hearttouch.htrefreshrecyclerview.utils.Utils;
 import com.netease.hearttouch.htrefreshrecyclerview.viewimpl.HTDefaultHorizontalRefreshViewHolder;
 import com.netease.hearttouch.htrefreshrecyclerview.viewimpl.HTDefaultVerticalRefreshViewHolder;
 
@@ -36,8 +37,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
-import static android.widget.LinearLayout.HORIZONTAL;
-import static android.widget.LinearLayout.VERTICAL;
+import static android.R.attr.orientation;
 import static com.netease.hearttouch.htrefreshrecyclerview.base.HTOrientation.VERTICAL_DOWN;
 import static com.netease.hearttouch.htrefreshrecyclerview.base.HTOrientation.VERTICAL_UP;
 
@@ -46,6 +46,7 @@ import static com.netease.hearttouch.htrefreshrecyclerview.base.HTOrientation.VE
  */
 public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshRecyclerViewInterface {
     private static final String TAG = HTBaseRecyclerView.class.getSimpleName();
+
     /**
      * 设置全局的默认刷新加载样式
      */
@@ -131,6 +132,7 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
     protected final int mTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
 
     private Paint mRefreshBgPaint;
+    protected int mLoadMoreViewSize;
 
 
     public HTBaseRecyclerView(Context context) {
@@ -205,10 +207,8 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
             HTBaseViewHolder viewHolder;
             if (checkOrientationVertical()) {
                 viewHolder = new HTDefaultVerticalRefreshViewHolder(getContext());
-                ((HTDefaultVerticalRefreshViewHolder) viewHolder).setDefaultRefreshViewArrow(mHTOrientation);
             } else {
                 viewHolder = new HTDefaultHorizontalRefreshViewHolder(getContext());
-                ((HTDefaultHorizontalRefreshViewHolder) viewHolder).setDefaultRefreshViewArrow(mHTOrientation);
             }
             setRefreshViewHolder(viewHolder);//设置默认刷新样式
         }
@@ -219,6 +219,15 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
 //        setRecyclerViewOnTouchListener();
         //设置RecyclerView的滚动监听
         setRecyclerViewOnScrollListener();
+    }
+
+
+    /**
+     * 计算刷新视图和加载更多视图在刷新方向上的尺寸
+     */
+    protected void computeViewSize() {
+        mLoadMoreViewSize = Utils.getItemViewSize(orientation, mLoadMoreContainerView);
+
     }
 
     /**
@@ -232,63 +241,24 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
      * 设置刷新和加载更多的视图控件并初始化
      */
     public void setRefreshViewHolder(@NonNull HTBaseViewHolder refreshViewHolder) {
+        resetRefreshViewHolderView();
         mHTViewHolder = refreshViewHolder;
         mHTViewHolderTracker = mHTViewHolder.getViewHolderTracker();
         mHTViewHolderTracker.setOrientation(mHTOrientation);
-        mHTViewHolder.computeViewSize(checkOrientationVertical() ? VERTICAL : HORIZONTAL);
 
-        resetRefreshViewHolderView();
-        initRefreshView();
-        initLoadMoreView();
+        mHTViewHolder.setRecyclerView(this, mRefreshContainerView, mLoadMoreContainerView);
+        computeViewSize();
+        setRefreshUIChangeListener(mHTViewHolder);
+        setLoadMoreUIChangeListener(mHTViewHolder);
     }
 
 
     private void resetRefreshViewHolderView() {
         mRefreshContainerView.removeAllViews();
         mLoadMoreContainerView.removeAllViews();
-    }
-
-
-    private void initRefreshView() {
-        if (mHTViewHolder == null) return;
-        View refreshView = mHTViewHolder.getRefreshView();
-        if (refreshView != null) {
-            if (refreshView.getParent() != null) {
-                ((ViewGroup) refreshView.getParent()).removeView(refreshView);
-            }
-            int res = mHTViewHolder.getRefreshViewBackgroundResId();
-            if (res != 0) {//默认背景透明
-                mRefreshContainerView.setBackgroundResource(res);
-            } else {
-                mRefreshContainerView.setBackgroundResource(android.R.color.transparent);
-            }
-            mRefreshContainerView.removeAllViews();
-            setViewLayoutParams(refreshView);
-            mRefreshContainerView.addView(refreshView);
-//            hideRefreshView(true);
+        if (mHTViewHolder != null) {
+            mHTViewHolder.resetViewHolder();
         }
-        setRefreshUIChangeListener(mHTViewHolder);
-    }
-
-    private void initLoadMoreView() {
-        if (mHTViewHolder == null) return;
-        View loadMoreView = mHTViewHolder.getLoadMoreView();
-        if (loadMoreView != null) {
-            if (loadMoreView.getParent() != null) {
-                ((ViewGroup) loadMoreView.getParent()).removeView(loadMoreView);
-            }
-            int res = mHTViewHolder.getLoadMoreViewBackgroundResId();
-            if (res != 0) {//默认背景透明
-                mLoadMoreContainerView.setBackgroundResource(res);
-            } else {
-                mLoadMoreContainerView.setBackgroundResource(android.R.color.transparent);
-            }
-            mLoadMoreContainerView.removeAllViews();
-            setViewLayoutParams(loadMoreView);
-            mLoadMoreContainerView.addView(loadMoreView);
-            hideLoadMoreView(true);
-        }
-        setLoadMoreUIChangeListener(mHTViewHolder);
     }
 
     private void setViewLayoutParams(View view) {
@@ -299,11 +269,14 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
         view.setLayoutParams(lp);
     }
 
-    protected boolean checkOrientationVertical() {
+
+
+
+    public boolean checkOrientationVertical() {
         return mHTOrientation == VERTICAL_UP || mHTOrientation == VERTICAL_DOWN;
     }
 
-    protected boolean checkOrientationReverse() {
+    public boolean checkOrientationReverse() {
         return mHTOrientation == HTOrientation.HORIZONTAL_LEFT || mHTOrientation == VERTICAL_UP;
     }
 
@@ -348,6 +321,12 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
         if (mRecyclerView != null) {
             measureChild(mRecyclerView, widthMeasureSpec, heightMeasureSpec);
         }
+    }
+
+
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        mHTViewHolderTracker.setRefreshViewSize(checkOrientationVertical() ? mRefreshContainerView.getMeasuredHeight() : mRefreshContainerView.getMeasuredWidth());
     }
 
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
@@ -495,7 +474,7 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
         if (mLoadMoreContainerView != null && mHTViewHolder != null) {
             int size = 0;
             if (isHide) {
-                size = -mHTViewHolderTracker.getLoadMoreSize();
+                size = -mLoadMoreViewSize;
             }
             switch (mHTOrientation) {
                 case VERTICAL_DOWN:

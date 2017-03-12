@@ -30,7 +30,6 @@ public final class HTViewHolderTracker {
     private float mOffsetX;
     private float mOffsetY;
     private int mRefreshViewSize;
-    private int mLoadMoreSize;
     /**刷新视图移动上一次的位置*/
     private int mLastPos = 0;
     /**刷新视图移动当前的位置*/
@@ -156,14 +155,6 @@ public final class HTViewHolderTracker {
 
     public boolean isIdlePosition() {
         return mCurrentPos == POSITION_IDLE;
-    }
-
-    public int getLoadMoreSize() {
-        return mLoadMoreSize;
-    }
-
-    public void setLoadMoreSize(int loadMoreSize) {
-        mLoadMoreSize = loadMoreSize;
     }
 
     public boolean hasLeftIdlePosition() {

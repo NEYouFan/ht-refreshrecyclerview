@@ -9,7 +9,7 @@
 >重写`onInitRefreshView()`和`onInitLoadMoreView()`方法设置视图。
 
 * 刷新视图和加载更多视图背景色
->使用`setRefreshViewBackgroundResId(int refreshViewBackgroundResId)`方法设置刷新视图的背景色；加载更多视图背景色方法为`setLoadMoreViewBackgroundResId(int loadMoreViewBackgroundResId)`。
+>使用`setRefreshViewBackgroundResId(int refreshViewBackgroundResId)`方法设置刷新视图的背景色。
 
 * 手指移动距离和刷新控件移动距离比值
 >使用`setPullDistanceScale(float pullDistanceScale)` 方法设置，参数不对则抛出异常。默认比例值是`1.8f`。

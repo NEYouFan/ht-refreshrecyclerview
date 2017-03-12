@@ -39,11 +39,11 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
     protected boolean mAutoRefresh;
 
     public HTBaseRecyclerViewImpl(Context context) {
-        this(context, null);
+        super(context);
     }
 
     public HTBaseRecyclerViewImpl(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
+        super(context, attrs);
     }
 
     public HTBaseRecyclerViewImpl(Context context, AttributeSet attrs, int defStyleAttr) {
@@ -77,7 +77,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        changeLoadMoreViewPositionWithAnimation(-mHTViewHolderTracker.getLoadMoreSize(), null);
+                        changeLoadMoreViewPositionWithAnimation(-mLoadMoreViewSize, null);
                     }
                 }, mHTViewHolder.getAnimationTime());
             }
@@ -265,7 +265,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 (mHTViewHolderTracker.isOverCompletePos() && mRefreshStatus == RefreshStatus.COMPLETE)*/) {
             mRefreshStatus = RefreshStatus.REFRESH_PREPARE;
             mRefreshUIChangeListener.onRefreshPrepare();
-            if(mRecyclerViewDragListener!=null){
+            if (mRecyclerViewDragListener != null) {
                 mRecyclerViewDragListener.onRefreshViewPrepareToMove();
             }
         }
@@ -355,7 +355,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
             if (mLoadMoreViewDisplay) {//一直显示没有更多提示
                 if (mScreenFilled) {
                     if (mHasMore) {//还有更多数据的时候,满一屏动画隐藏,否则直接隐藏
-                        changeLoadMoreViewPositionWithAnimation(-mHTViewHolderTracker.getLoadMoreSize(), null);
+                        changeLoadMoreViewPositionWithAnimation(-mLoadMoreViewSize, null);
                     } else {
                         hideLoadMoreView(false);
                     }
@@ -364,7 +364,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 }
             } else {
                 if (mScreenFilled) {
-                    changeLoadMoreViewPositionWithAnimation(-mHTViewHolderTracker.getLoadMoreSize(), null);
+                    changeLoadMoreViewPositionWithAnimation(-mLoadMoreViewSize, null);
                 } else {
                     hideLoadMoreView(true);
                 }
@@ -403,7 +403,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
 
     @Override
     public void startAutoRefresh() {
-        if (mRecyclerView != null && mHTViewHolder != null && mHTViewHolder.getRefreshView() != null) {
+        if (mRecyclerView != null && mHTViewHolder != null && mHTViewHolder.getRefreshViewBackgroundResId() != 0) {
             if (mRefreshStatus != RefreshStatus.IDLE || mLoadMoreStatus != LoadMoreStatus.IDLE || mRefreshDelegate == null) {
                 return;
             }
@@ -417,7 +417,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 if (mRefreshUIChangeListener != null) {
                     mRefreshUIChangeListener.onRefreshPrepare();
                 }
-                if(mRecyclerViewDragListener!=null){
+                if (mRecyclerViewDragListener != null) {
                     mRecyclerViewDragListener.onRefreshViewPrepareToMove();
                 }
                 mScrollJob.tryToScrollTo(mHTViewHolderTracker.getOffsetToRefresh(), mHTViewHolder.getAnimationTime());
@@ -523,7 +523,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 startValue = mLoadMoreContainerView.getPaddingRight();
                 break;
         }
-        if (startValue <= -mHTViewHolderTracker.getLoadMoreSize()) return;
+        if (startValue <= -mLoadMoreViewSize) return;
         mLoadMoreAnimator = ValueAnimator.ofInt(startValue, targetPosition);
         mLoadMoreAnimator.setDuration(mHTViewHolder.getAnimationTime());
         mLoadMoreAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
