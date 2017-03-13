@@ -22,8 +22,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 
 import com.netease.hearttouch.htrefreshrecyclerview.HTLoadMoreListener;
 import com.netease.hearttouch.htrefreshrecyclerview.HTRecyclerViewDragListener;
@@ -82,11 +80,11 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
     /**
      * 包裹自定义刷新view的控件
      */
-    protected final ViewGroup mRefreshContainerView;
+    protected  ViewGroup mRefreshContainerView;
     /**
      * 包裹自定义加载更多view的控件
      */
-    protected final ViewGroup mLoadMoreContainerView;
+    protected  ViewGroup mLoadMoreContainerView;
     /**
      * 封装的RecyclerView控件
      */
@@ -134,7 +132,6 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
     private Paint mRefreshBgPaint;
     protected int mLoadMoreViewSize;
 
-
     public HTBaseRecyclerView(Context context) {
         this(context, null, 0);
     }
@@ -148,8 +145,6 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
         setWillNotDraw(false);
         //创建界面主要控件对象
         mRecyclerView = new RecyclerView(getContext(), attrs, defStyleAttr);//根据attrs创建RecyclerView控件
-        mRefreshContainerView = new FrameLayout(getContext());
-        mLoadMoreContainerView = new LinearLayout(getContext());
         //一些参数初始化
         initRefreshBgPaint(context);
         initAttrs(attrs);
@@ -182,10 +177,7 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
         //根据当前的方向进行布局
         removeAllViews();
         mRecyclerView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        setViewLayoutParams(mRefreshContainerView);
-        setViewLayoutParams(mLoadMoreContainerView);
         addView(mRecyclerView);
-        addView(mRefreshContainerView);
 
         //如果设置了全局的默认刷新样式,就初始化
         if (sViewHolderClass != null) {
@@ -207,8 +199,10 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
             HTBaseViewHolder viewHolder;
             if (checkOrientationVertical()) {
                 viewHolder = new HTDefaultVerticalRefreshViewHolder(getContext());
+//                ((HTDefaultVerticalRefreshViewHolder)viewHolder).setDefaultRefreshViewArrow();
             } else {
                 viewHolder = new HTDefaultHorizontalRefreshViewHolder(getContext());
+//                ((HTDefaultHorizontalRefreshViewHolder)viewHolder).setDefaultRefreshViewArrow();
             }
             setRefreshViewHolder(viewHolder);//设置默认刷新样式
         }
@@ -225,8 +219,8 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
     /**
      * 计算刷新视图和加载更多视图在刷新方向上的尺寸
      */
-    protected void computeViewSize() {
-        mLoadMoreViewSize = Utils.getItemViewSize(orientation, mLoadMoreContainerView);
+    protected void computeViewSize(View view) {
+        mLoadMoreViewSize = view != null ? Utils.getItemViewSize(orientation, view) : 0;
 
     }
 
@@ -241,24 +235,33 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
      * 设置刷新和加载更多的视图控件并初始化
      */
     public void setRefreshViewHolder(@NonNull HTBaseViewHolder refreshViewHolder) {
-        resetRefreshViewHolderView();
+        if (mHTViewHolder != null) {
+            mHTViewHolder.resetViewHolder();
+        }
+        if (mRefreshContainerView != null) {
+            removeView(mRefreshContainerView);
+        }
         mHTViewHolder = refreshViewHolder;
-        mHTViewHolderTracker = mHTViewHolder.getViewHolderTracker();
-        mHTViewHolderTracker.setOrientation(mHTOrientation);
-
-        mHTViewHolder.setRecyclerView(this, mRefreshContainerView, mLoadMoreContainerView);
-        computeViewSize();
-        setRefreshUIChangeListener(mHTViewHolder);
-        setLoadMoreUIChangeListener(mHTViewHolder);
+        resetRefreshViewHolderView();
     }
 
 
     private void resetRefreshViewHolderView() {
-        mRefreshContainerView.removeAllViews();
-        mLoadMoreContainerView.removeAllViews();
-        if (mHTViewHolder != null) {
-            mHTViewHolder.resetViewHolder();
+        mRefreshContainerView = mHTViewHolder.getRefreshContainerView();
+        mLoadMoreContainerView = mHTViewHolder.getLoadMoreContainerView();
+        setViewLayoutParams(mLoadMoreContainerView);
+        setViewLayoutParams(mRefreshContainerView);
+        if (mRefreshContainerView != null) {
+            addView(mRefreshContainerView);
         }
+        mHTViewHolderTracker = mHTViewHolder.getViewHolderTracker();
+        mHTViewHolderTracker.setOrientation(mHTOrientation);
+
+        mHTViewHolder.setRecyclerView(this);
+        computeViewSize(mHTViewHolder.getLoadMoreContainerView());
+
+        setRefreshUIChangeListener(mHTViewHolder);
+        setLoadMoreUIChangeListener(mHTViewHolder);
     }
 
     private void setViewLayoutParams(View view) {
@@ -268,8 +271,6 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
         lp.height = checkOrientationVertical() ? LayoutParams.WRAP_CONTENT : LayoutParams.MATCH_PARENT;
         view.setLayoutParams(lp);
     }
-
-
 
 
     public boolean checkOrientationVertical() {
@@ -326,7 +327,9 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
 
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        mHTViewHolderTracker.setRefreshViewSize(checkOrientationVertical() ? mRefreshContainerView.getMeasuredHeight() : mRefreshContainerView.getMeasuredWidth());
+        if (mRefreshContainerView != null) {
+            mHTViewHolderTracker.setRefreshViewSize(checkOrientationVertical() ? mRefreshContainerView.getMeasuredHeight() : mRefreshContainerView.getMeasuredWidth());
+        }
     }
 
     protected void onLayout(boolean changed, int l, int t, int r, int b) {

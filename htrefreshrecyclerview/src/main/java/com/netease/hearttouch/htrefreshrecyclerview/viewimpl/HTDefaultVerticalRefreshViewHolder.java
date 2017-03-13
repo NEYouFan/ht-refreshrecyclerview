@@ -59,8 +59,12 @@ public class HTDefaultVerticalRefreshViewHolder extends HTBaseViewHolder {
         View loadMoreView = View.inflate(mContext, R.layout.ht_view_vertical_load_more_default, parent);
         mVLoadMore = loadMoreView.findViewById(R.id.liner_loading);
         mVNoMore = loadMoreView.findViewById(R.id.tv_no_more);
-        setDefaultRefreshViewArrow();
         return loadMoreView;
+    }
+
+
+    protected void onAttachedToRecyclerView() {
+        setDefaultRefreshViewArrow();
     }
 
     @Override
@@ -130,8 +134,8 @@ public class HTDefaultVerticalRefreshViewHolder extends HTBaseViewHolder {
         }
     }
 
-     void setDefaultRefreshViewArrow() {
-        if (mIvRefreshArrow == null) return;
+    public void setDefaultRefreshViewArrow() {
+        if (mIvRefreshArrow == null || mRecyclerView == null) return;
         if (mRecyclerView.checkOrientationReverse()) {
             mIvRefreshArrow.setImageResource(R.drawable.ht_up_arrow_default);
 

@@ -8,6 +8,8 @@ package com.netease.hearttouch.htrefreshrecyclerview.base;
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 
 /**
  * 刷新视图和加载更多视图的包裹基类,用户需要继承该类完成自定义视图样式
@@ -26,6 +28,15 @@ public abstract class HTBaseViewHolder implements HTBaseRecyclerView.HTLoadMoreU
      */
     protected View mLoadMoreView;
 
+    /**
+     * 包裹自定义刷新view的控件
+     */
+    private ViewGroup mRefreshContainerView;
+    /**
+     * 包裹自定义加载更多view的控件
+     */
+    private ViewGroup mLoadMoreContainerView;
+
     protected HTBaseRecyclerView mRecyclerView;
     /**
      * 刷新视图的背景色
@@ -41,37 +52,51 @@ public abstract class HTBaseViewHolder implements HTBaseRecyclerView.HTLoadMoreU
 
     public HTBaseViewHolder(Context context) {
         mContext = context;
+        initViews(context);
+    }
+
+    private void initViews(Context context) {
+        FrameLayout refreshLayout = new FrameLayout(context);
+        mRefreshContainerView = (ViewGroup) onInitRefreshView(refreshLayout);
+        LinearLayout loadMoreLayout = new LinearLayout(context);
+        mLoadMoreContainerView = (ViewGroup) onInitLoadMoreView(loadMoreLayout);
+        checkViewAttached(refreshLayout, loadMoreLayout);
         mViewHolderTracker = new HTViewHolderTracker();
     }
 
+    private void checkViewAttached(FrameLayout refreshLayout, LinearLayout loadMoreLayout) {
 
-    void setRecyclerView(HTBaseRecyclerView recyclerView, ViewGroup refreshViewParent, ViewGroup loadMoreViewParent) {
-        mRecyclerView = recyclerView;
-        View view = onInitRefreshView(refreshViewParent);
-        if (view != null) {
-            if (refreshViewParent.getChildCount() == 0) {
+        if (mRefreshContainerView != null) {
+            if (refreshLayout != mRefreshContainerView) {
                 throw new IllegalArgumentException("the refresh view has not been attached to parent view !");
             } else {
-                mRefreshView = refreshViewParent.getChildAt(0);
+                mRefreshView = mRefreshContainerView.getChildAt(0);
             }
         }
-        view = onInitLoadMoreView(loadMoreViewParent);
-        if (view != null) {
-            if (loadMoreViewParent.getChildCount() == 0) {
+        if (mLoadMoreContainerView != null) {
+            if (mLoadMoreContainerView != loadMoreLayout) {
                 throw new IllegalArgumentException("the loadMore view has not been attached to parent view !");
             } else {
-                mLoadMoreView = loadMoreViewParent.getChildAt(0);
+                mLoadMoreView = mLoadMoreContainerView.getChildAt(0);
             }
         }
+    }
 
+
+    protected void onAttachedToRecyclerView() {
+
+    }
+
+    void setRecyclerView(HTBaseRecyclerView recyclerView) {
+        mRecyclerView = recyclerView;
+        onAttachedToRecyclerView();
     }
 
     protected void updateViewSize() {
         if (mRecyclerView != null) {
-            mRecyclerView.computeViewSize();
+            mRecyclerView.computeViewSize(mLoadMoreContainerView);
         }
     }
-
 
     /**
      * 设置刷新视图的背景色
@@ -84,7 +109,7 @@ public abstract class HTBaseViewHolder implements HTBaseRecyclerView.HTLoadMoreU
         }
     }
 
-     HTViewHolderTracker getViewHolderTracker() {
+    HTViewHolderTracker getViewHolderTracker() {
         return mViewHolderTracker;
     }
 
@@ -149,11 +174,11 @@ public abstract class HTBaseViewHolder implements HTBaseRecyclerView.HTLoadMoreU
         return mRefreshViewBackgroundResId;
     }
 
-    public final View getRefreshView() {
-        return mRefreshView;
+    public final ViewGroup getRefreshContainerView() {
+        return mRefreshContainerView;
     }
 
-    public final View getLoadMoreView() {
-        return mLoadMoreView;
+    public final ViewGroup getLoadMoreContainerView() {
+        return mLoadMoreContainerView;
     }
 }

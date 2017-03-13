@@ -52,7 +52,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
 
     @Override
     public boolean shouldHandleRefresh() {
-        if (mHTViewHolder == null || mHTViewHolder.getRefreshView() == null || mRefreshDelegate == null) {
+        if (mHTViewHolder == null || mRefreshContainerView == null || mRefreshDelegate == null) {
             return false;
         }
         if (mRecyclerView.getLayoutManager() == null || mLoadMoreStatus != LoadMoreStatus.IDLE) {
@@ -63,7 +63,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
 
     @Override
     public boolean shouldHandleLoadMore() {
-        if (mHTViewHolder == null || mHTViewHolder.getLoadMoreView() == null || mLoadMoreDelegate == null ||
+        if (mHTViewHolder == null || mLoadMoreContainerView == null || mLoadMoreDelegate == null ||
                 mHTWrapperAdapter == null || !mHTWrapperAdapter.hasLoadMoreView()) {
             return false;
         }
