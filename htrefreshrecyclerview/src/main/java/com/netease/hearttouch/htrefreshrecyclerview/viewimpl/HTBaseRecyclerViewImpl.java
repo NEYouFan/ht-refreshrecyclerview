@@ -25,6 +25,8 @@ import com.netease.hearttouch.htrefreshrecyclerview.utils.Utils;
 
 import java.util.Arrays;
 
+import static com.netease.hearttouch.htrefreshrecyclerview.utils.Utils.getFirstItemPosition;
+
 /**
  * 实现的一种刷新基类
  */
@@ -94,7 +96,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
             return true;
         }
 
-        int firstVisibleItem = Utils.getFirstItemPosition(manager, false);//获取第一个可见的Item位置
+        int firstVisibleItem = getFirstItemPosition(manager, false);//获取第一个可见的Item位置
         return firstVisibleItem + manager.getChildCount() >= manager.getItemCount();
     }
 
@@ -150,10 +152,9 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
 
     protected void onViewRelease() {
         tryToPerformRefresh();
-
         if (mRefreshStatus == RefreshStatus.REFRESHING) {
             if (mHTViewHolderTracker.isOverRefreshViewSize()) { //触发刷新后，需要保持刷新视图，将刷新视图滚动到对应的刷新位置
-                mScrollJob.tryToScrollTo(mHTViewHolderTracker.getRefreshViewSize(), mHTViewHolder.getAnimationTime());
+                mScrollJob.tryToScrollTo(mHTViewHolderTracker.getRefreshViewSize(), mHTViewHolder.getAnimationTime(), 0);
             }
         } else {
             if (mRefreshStatus == RefreshStatus.COMPLETE) {
@@ -169,7 +170,6 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
         if (mRefreshStatus != RefreshStatus.REFRESH_PREPARE) {
             return;
         }
-        //包含自动刷新
         if ((mHTViewHolderTracker.isOverRefreshViewSize() && isAutoRefresh()) || mHTViewHolderTracker.isOverOffsetToRefresh()) {
             mRefreshStatus = RefreshStatus.REFRESHING;
             performRefresh();
@@ -185,7 +185,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
 
     protected void tryScrollBackToOriginal() {
         if (!mHTViewHolderTracker.isUnderTouch()) {
-            mScrollJob.tryToScrollTo(HTViewHolderTracker.POSITION_IDLE, mHTViewHolder.getAnimationTime());
+            mScrollJob.tryToScrollTo(HTViewHolderTracker.POSITION_IDLE, mHTViewHolder.getAnimationTime(), 0);
         }
     }
 
@@ -240,6 +240,11 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
         return mAutoRefresh;
     }
 
+    /**
+     * 刷新视图位置移动处理
+     *
+     * @param offset 偏移量
+     */
     protected void updatePos(float offset) {
         if ((offset < 0 && mHTViewHolderTracker.isIdlePosition())) {
             return;
@@ -278,6 +283,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
             }
         }
         if (mRefreshStatus == RefreshStatus.REFRESH_PREPARE) {
+            //处理自动刷新
             if (mHTViewHolderTracker.hasJustReachedRefreshSizeFromIdle() && isAutoRefresh()) {
                 tryToPerformRefresh();
             }
@@ -403,7 +409,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
 
     @Override
     public void startAutoRefresh() {
-        if (mRecyclerView != null && mHTViewHolder != null && mHTViewHolder.getRefreshViewBackgroundResId() != 0) {
+        if (mRecyclerView != null && mHTViewHolder != null && mHTViewHolder.getRefreshContainerView() != null) {
             if (mRefreshStatus != RefreshStatus.IDLE || mLoadMoreStatus != LoadMoreStatus.IDLE || mRefreshDelegate == null) {
                 return;
             }
@@ -412,17 +418,9 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
             }
             RecyclerView.LayoutManager layoutManager = mRecyclerView.getLayoutManager();
             if (layoutManager != null && layoutManager.getItemCount() > 0) {
+                int pos = Utils.getFirstItemPosition(layoutManager, true);
                 layoutManager.scrollToPosition(0);
-                mRefreshStatus = RefreshStatus.REFRESH_PREPARE;
-                if (mRefreshUIChangeListener != null) {
-                    mRefreshUIChangeListener.onRefreshPrepare();
-                }
-                if (mRecyclerViewDragListener != null) {
-                    mRecyclerViewDragListener.onRefreshViewPrepareToMove();
-                }
-                mScrollJob.tryToScrollTo(mHTViewHolderTracker.getOffsetToRefresh(), mHTViewHolder.getAnimationTime());
-                mRefreshStatus = RefreshStatus.REFRESHING;
-                performRefresh();
+                mScrollJob.tryToScrollTo(mHTViewHolderTracker.getOffsetToRefresh(), mHTViewHolder.getAnimationTime(), 10 * pos);
                 mAutoRefresh = true;
             }
         }
@@ -595,7 +593,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
             }
         }
 
-        abstract void tryToScrollTo(int to, int duration);
+        abstract void tryToScrollTo(int to, int duration, long delayMillis);
     }
 
 }

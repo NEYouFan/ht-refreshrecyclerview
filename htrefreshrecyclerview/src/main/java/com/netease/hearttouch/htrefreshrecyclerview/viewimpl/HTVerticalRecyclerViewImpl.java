@@ -39,7 +39,7 @@ public abstract class HTVerticalRecyclerViewImpl extends HTBaseRecyclerViewImpl 
             }
         }
 
-        void tryToScrollTo(int to, int duration) {
+        void tryToScrollTo(int to, int duration, long delayMillis) {
             if (mHTViewHolderTracker.isSamePos(to)) {
                 return;
             }
@@ -55,7 +55,7 @@ public abstract class HTVerticalRecyclerViewImpl extends HTBaseRecyclerViewImpl 
                 mScroller.forceFinished(true);
             }
             mScroller.startScroll(0, 0, 0, distance, duration);
-            post(this);
+            postDelayed(this, delayMillis);
             mScrollRunning = true;
         }
     }

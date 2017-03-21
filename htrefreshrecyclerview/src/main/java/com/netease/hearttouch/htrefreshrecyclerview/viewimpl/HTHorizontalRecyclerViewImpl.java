@@ -17,7 +17,7 @@ public abstract class HTHorizontalRecyclerViewImpl extends HTBaseRecyclerViewImp
     }
 
     public HTHorizontalRecyclerViewImpl(Context context, AttributeSet attrs) {
-        this(context, attrs,0);
+        this(context, attrs, 0);
 
     }
 
@@ -41,7 +41,7 @@ public abstract class HTHorizontalRecyclerViewImpl extends HTBaseRecyclerViewImp
             }
         }
 
-        void tryToScrollTo(int to, int duration) {
+        void tryToScrollTo(int to, int duration, long delayMillis) {
             if (mHTViewHolderTracker.isSamePos(to)) {
                 return;
             }
@@ -57,7 +57,7 @@ public abstract class HTHorizontalRecyclerViewImpl extends HTBaseRecyclerViewImp
                 mScroller.forceFinished(true);
             }
             mScroller.startScroll(0, 0, distance, 0, duration);
-            post(this);
+            postDelayed(this, delayMillis);
             mScrollRunning = true;
         }
     }
