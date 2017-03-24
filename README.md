@@ -70,5 +70,8 @@ compile 'com.netease.hearttouch:ht-refreshrecyclerview:1.1.1'
 -dontwarn com.netease.hearttouch.htrefreshrecyclerview.**
 ```
 
+## 版本更新
+[更新记录](https://github.com/NEYouFan/ht-refreshrecyclerview/blob/master/CHANGELOG.md)
+
 ## 许可证
 `HTRefreshRecyclerView` 使用 `MIT` 许可证，详情见 [LICENSE](https://github.com/NEYouFan/ht-refreshrecyclerview/blob/master/LICENSE.txt) 文件。

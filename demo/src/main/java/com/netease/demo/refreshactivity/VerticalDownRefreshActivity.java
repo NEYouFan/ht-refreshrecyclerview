@@ -85,6 +85,16 @@ public class VerticalDownRefreshActivity extends AppCompatActivity implements HT
         }
     }
 
+
+    protected void onResume() {
+        super.onResume();
+       getWindow().getDecorView().post(new Runnable() {
+           public void run() {
+               mRefreshLayout.startAutoRefresh();
+           }
+       }) ;
+    }
+
     @Override
     public void onRefresh() {
         new Handler(getMainLooper()).postDelayed(new Runnable() {
