@@ -80,11 +80,11 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
     /**
      * 包裹自定义刷新view的控件
      */
-    protected  ViewGroup mRefreshContainerView;
+    protected ViewGroup mRefreshContainerView;
     /**
      * 包裹自定义加载更多view的控件
      */
-    protected  ViewGroup mLoadMoreContainerView;
+    protected ViewGroup mLoadMoreContainerView;
     /**
      * 封装的RecyclerView控件
      */
@@ -606,9 +606,14 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
      */
     protected abstract void endLoadMore();
 
+    protected abstract void initLoadMoreSupported();
+
     @Override
     public void setOnLoadMoreListener(HTLoadMoreListener loadMoreDelegate) {
         mLoadMoreDelegate = loadMoreDelegate;
+        if (loadMoreDelegate != null) {
+            initLoadMoreSupported();
+        }
     }
 
     @Override

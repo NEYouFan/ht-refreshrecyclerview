@@ -295,10 +295,9 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
 
     protected abstract void performUpdateViewPosition(int change);
 
-
     @Override
-    public void setAdapter(RecyclerView.Adapter adapter) {
-        super.setAdapter(adapter);
+    protected void initLoadMoreSupported() {
+        if (mHTWrapperAdapter == null) return;
         mHTWrapperAdapter.setLoadMoreViewHolderListener(new HTWrapperAdapter.LoadMoreViewHolderListener() {
             @Override
             public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {

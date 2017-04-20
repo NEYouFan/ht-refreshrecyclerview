@@ -84,7 +84,7 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     public boolean hasLoadMoreView() {
-        return loadMoreView != null;
+        return loadMoreView != null && mLoadMoreViewHolderListener != null;
     }
 
     @Override
