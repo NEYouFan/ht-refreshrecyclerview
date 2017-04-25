@@ -29,7 +29,7 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     /**
      * 自定义的加载更多view
      */
-    private View loadMoreView;
+    private View mLoadMoreView;
 
     private RecyclerView.AdapterDataObserver dataObserver = new RecyclerView.AdapterDataObserver() {
         @Override
@@ -75,7 +75,7 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     public HTWrapperAdapter(@NonNull RecyclerView.Adapter<RecyclerView.ViewHolder> innerAdapter, View loadMoreView) {
-        this.loadMoreView = loadMoreView;
+        this.mLoadMoreView = loadMoreView;
         setInnerAdapter(innerAdapter);
     }
 
@@ -84,13 +84,15 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     public boolean hasLoadMoreView() {
-        return loadMoreView != null && mLoadMoreViewHolderListener != null;
+        return mLoadMoreView != null && mLoadMoreViewHolderListener != null;
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         if (viewType == TYPE_LOAD_MORE_VIEW) {
-            return new ViewHolder(loadMoreView);
+            ViewHolder viewHolder = new ViewHolder(mLoadMoreView);
+            viewHolder.setIsRecyclable(false);
+            return viewHolder;
         } else
             return mInnerAdapter.onCreateViewHolder(parent, viewType);
     }
@@ -101,13 +103,12 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             if (mLoadMoreViewHolderListener != null) {
                 mLoadMoreViewHolderListener.onBindData(holder, position);
             }
+
             return;
         }
-        if (mInnerAdapter != null) {
-            int adapterCount = mInnerAdapter.getItemCount();
-            if (position < adapterCount) {
-                mInnerAdapter.onBindViewHolder(holder, position);
-            }
+        int adapterCount = mInnerAdapter.getItemCount();
+        if (position < adapterCount) {
+            mInnerAdapter.onBindViewHolder(holder, position);
         }
     }
 
@@ -118,9 +119,10 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
+        mInnerAdapter.onViewAttachedToWindow(holder);
         super.onViewAttachedToWindow(holder);
         if (holder instanceof ViewHolder) {
-            if (loadMoreView == null) return;
+            if (mLoadMoreView == null) return;
             //支持瀑布流布局
             ViewGroup.LayoutParams lp = holder.itemView.getLayoutParams();
             if (lp instanceof StaggeredGridLayoutManager.LayoutParams) {
@@ -132,8 +134,13 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
     }
 
+    public boolean onFailedToRecycleView(RecyclerView.ViewHolder holder) {
+        return super.onFailedToRecycleView(holder);
+    }
+
     @Override
     public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+        mInnerAdapter.onAttachedToRecyclerView(recyclerView);
         super.onAttachedToRecyclerView(recyclerView);
         //对Grid布局进行支持
         RecyclerView.LayoutManager manager = recyclerView.getLayoutManager();
@@ -148,6 +155,13 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
     }
 
+
+    @Override
+    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
+        mInnerAdapter.onAttachedToRecyclerView(recyclerView);
+        super.onDetachedFromRecyclerView(recyclerView);
+    }
+
     @Override
     public void onViewDetachedFromWindow(RecyclerView.ViewHolder holder) {
         if (holder instanceof ViewHolder) {
@@ -155,6 +169,7 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 mLoadMoreViewHolderListener.onViewDetachedFromWindow(holder);
             }
         }
+        mInnerAdapter.onViewDetachedFromWindow(holder);
         super.onViewDetachedFromWindow(holder);
     }
 
@@ -162,19 +177,15 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public int getItemCount() {
         int itemCount = 0;
         if (hasLoadMoreView()) itemCount++;
-        if (mInnerAdapter != null) {
-            itemCount += mInnerAdapter.getItemCount();
-        }
+        itemCount += mInnerAdapter.getItemCount();
         return itemCount;
     }
 
     @Override
     public int getItemViewType(int position) {
-        if (mInnerAdapter != null) {
-            int adapterCount = mInnerAdapter.getItemCount();
-            if (position < adapterCount) {
-                return mInnerAdapter.getItemViewType(position);
-            }
+        int adapterCount = mInnerAdapter.getItemCount();
+        if (position < adapterCount) {
+            return mInnerAdapter.getItemViewType(position);
         }
         return TYPE_LOAD_MORE_VIEW;
     }
@@ -185,6 +196,9 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
      * @param adapter 被包裹的Adapter
      */
     private void setInnerAdapter(RecyclerView.Adapter<RecyclerView.ViewHolder> adapter) {
+        if (adapter == null) {
+            throw new IllegalArgumentException("adapter should not be null");
+        }
         if (mInnerAdapter != null) {
             notifyItemRangeRemoved(0, mInnerAdapter.getItemCount());
             mInnerAdapter.unregisterAdapterDataObserver(dataObserver);

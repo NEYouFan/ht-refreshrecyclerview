@@ -6,6 +6,7 @@
 <resources>
     <declare-styleable name="HTRefreshRecyclerView">
         <!--   <attr name="htDebug" format="boolean" />-->
+        <attr name="htId" format="integer"/>
         <attr name="htOrientation" format="enum">
             <enum name="vertical_up" value="0" />
             <enum name="vertical_down" value="1" />

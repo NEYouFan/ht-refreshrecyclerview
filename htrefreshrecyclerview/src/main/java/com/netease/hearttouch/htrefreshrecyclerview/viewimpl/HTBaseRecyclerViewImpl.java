@@ -521,13 +521,15 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 break;
         }
         if (startValue <= -mLoadMoreViewSize) return;
+        if (mLoadMoreAnimator != null && mLoadMoreAnimator.isRunning()) {
+            mLoadMoreAnimator.end();
+        }
         mLoadMoreAnimator = ValueAnimator.ofInt(startValue, targetPosition);
         mLoadMoreAnimator.setDuration(mHTViewHolder.getAnimationTime());
         mLoadMoreAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 int padding = (int) animation.getAnimatedValue();
-
                 mLoadMoreContainerView.setPadding(
                         mHTOrientation == HTOrientation.HORIZONTAL_LEFT ? padding : 0,
                         mHTOrientation == HTOrientation.VERTICAL_UP ? padding : 0,
@@ -538,8 +540,13 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
         if (animatorListener != null) {
             mLoadMoreAnimator.addListener(animatorListener);
         }
-        mLoadMoreAnimator.start();
+        post(new Runnable() {
+            public void run() {
+                mLoadMoreAnimator.start();
+            }
+        });
     }
+
 
     abstract class ScrollJob implements Runnable {
 

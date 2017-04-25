@@ -35,7 +35,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
-import static android.R.attr.orientation;
 import static com.netease.hearttouch.htrefreshrecyclerview.base.HTOrientation.VERTICAL_DOWN;
 import static com.netease.hearttouch.htrefreshrecyclerview.base.HTOrientation.VERTICAL_UP;
 
@@ -164,6 +163,8 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
         TypedArray typedArray = getContext().obtainStyledAttributes(attrs, R.styleable.HTRefreshRecyclerView);
         try {
             mHTOrientation = typedArray.getInteger(R.styleable.HTRefreshRecyclerView_htOrientation, 1);
+            int id = typedArray.getInteger(R.styleable.HTRefreshRecyclerView_htId, View.NO_ID);
+            mRecyclerView.setId(id);//id用于记录控件状态
         } finally {
             typedArray.recycle();
         }
@@ -171,12 +172,12 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
 
     private void initViews() {
         //设置RecyclerView的布局参数,由于是使用attrs创建RecyclerView,需要把一些参数重置
-        mRecyclerView.setId(View.NO_ID);//Id值不能和attrs中的重复
+//        mRecyclerView.setId(Utils.generateViewId());//Id值不能和attrs中的重复
         mRecyclerView.setOverScrollMode(View.OVER_SCROLL_NEVER);//去掉阴影
 
         //根据当前的方向进行布局
         removeAllViews();
-        mRecyclerView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mRecyclerView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         addView(mRecyclerView);
 
         //如果设置了全局的默认刷新样式,就初始化
@@ -220,7 +221,7 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
      * 计算刷新视图和加载更多视图在刷新方向上的尺寸
      */
     protected void computeViewSize(View view) {
-        mLoadMoreViewSize = view != null ? Utils.getItemViewSize(orientation, view) : 0;
+        mLoadMoreViewSize = view != null ? Utils.getItemViewSize(mHTOrientation, view) : 0;
 
     }
 
