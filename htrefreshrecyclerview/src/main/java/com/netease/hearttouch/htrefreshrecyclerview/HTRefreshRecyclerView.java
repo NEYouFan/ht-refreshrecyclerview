@@ -73,7 +73,6 @@ public class HTRefreshRecyclerView extends FrameLayout implements HTRefreshRecyc
         } finally {
             typedArray.recycle();
         }
-
     }
 
     /**

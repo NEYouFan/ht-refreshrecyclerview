@@ -90,7 +90,7 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         if (viewType == TYPE_LOAD_MORE_VIEW) {
-            ViewHolder viewHolder = new ViewHolder(mLoadMoreView);
+            InnerViewHolder viewHolder = new InnerViewHolder(mLoadMoreView);
             viewHolder.setIsRecyclable(false);
             return viewHolder;
         } else
@@ -99,15 +99,11 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        if (isLoadMoreView(position)) {
+        if (holder instanceof InnerViewHolder) {
             if (mLoadMoreViewHolderListener != null) {
                 mLoadMoreViewHolderListener.onBindData(holder, position);
             }
-
-            return;
-        }
-        int adapterCount = mInnerAdapter.getItemCount();
-        if (position < adapterCount) {
+        } else {
             mInnerAdapter.onBindViewHolder(holder, position);
         }
     }
@@ -119,9 +115,8 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
-        mInnerAdapter.onViewAttachedToWindow(holder);
         super.onViewAttachedToWindow(holder);
-        if (holder instanceof ViewHolder) {
+        if (holder instanceof InnerViewHolder) {
             if (mLoadMoreView == null) return;
             //支持瀑布流布局
             ViewGroup.LayoutParams lp = holder.itemView.getLayoutParams();
@@ -131,6 +126,8 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             if (mLoadMoreViewHolderListener != null) {
                 mLoadMoreViewHolderListener.onViewAttachedToWindow(holder);
             }
+        } else {
+            mInnerAdapter.onViewAttachedToWindow(holder);
         }
     }
 
@@ -164,12 +161,13 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onViewDetachedFromWindow(RecyclerView.ViewHolder holder) {
-        if (holder instanceof ViewHolder) {
+        if (holder instanceof InnerViewHolder) {
             if (mLoadMoreViewHolderListener != null) {
                 mLoadMoreViewHolderListener.onViewDetachedFromWindow(holder);
             }
+        } else {
+            mInnerAdapter.onViewDetachedFromWindow(holder);
         }
-        mInnerAdapter.onViewDetachedFromWindow(holder);
         super.onViewDetachedFromWindow(holder);
     }
 
@@ -229,8 +227,8 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     /**
      * 自定义的ViewHolder
      */
-    class ViewHolder extends RecyclerView.ViewHolder {
-        ViewHolder(View itemView) {
+    class InnerViewHolder extends RecyclerView.ViewHolder {
+        InnerViewHolder(View itemView) {
             super(itemView);
         }
     }

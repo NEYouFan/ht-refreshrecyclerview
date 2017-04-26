@@ -301,11 +301,8 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
         mHTWrapperAdapter.setLoadMoreViewHolderListener(new HTWrapperAdapter.LoadMoreViewHolderListener() {
             @Override
             public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
-                stopLoadMorePositionAnimation();
-                //在拉动过程中,会触发该事件,这里做一些过滤,减少计算
-                if (mRefreshStatus == RefreshStatus.IDLE || mRefreshStatus == RefreshStatus.REFRESHING) {
-                    mScreenFilled = isCurrentItemSizeOver(false);
-                }
+                stopLoadMoreAnimation();
+                mScreenFilled = isCurrentItemSizeOver(false);
                 hideLoadMoreView(!mScreenFilled);
                 mStartPosition = 0;
                 mItemCount = 0;
@@ -388,7 +385,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
         }
     }
 
-    protected void stopLoadMorePositionAnimation() {
+    protected void stopLoadMoreAnimation() {
         if (mLoadMoreAnimator != null && mLoadMoreAnimator.isRunning()) {
             mLoadMoreAnimator.cancel();
         }

@@ -24,7 +24,7 @@ class HTItemDecoration extends RecyclerView.ItemDecoration {
     @Override
     public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
         final RecyclerView.ViewHolder childViewHolder = parent.getChildViewHolder(view);
-        if (childViewHolder instanceof HTWrapperAdapter.ViewHolder) {
+        if (childViewHolder instanceof HTWrapperAdapter.InnerViewHolder) {
             outRect.set(0, 0, 0, 0);//如果是加载更多的ViewHolder,不进行装饰
             return;
         }
