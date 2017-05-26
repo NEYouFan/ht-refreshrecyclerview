@@ -131,6 +131,8 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
     private Paint mRefreshBgPaint;
     protected int mLoadMoreViewSize;
 
+    protected HTWrapperAdapter.LoadMoreViewHolderListener mLoadMoreViewHolderListener;
+
     public HTBaseRecyclerView(Context context) {
         this(context, null, 0);
     }
@@ -714,6 +716,7 @@ public abstract class HTBaseRecyclerView extends ViewGroup implements HTRefreshR
         //生成支持加载更多view的自定义Adapter
         mInnerAdapter = adapter;
         mHTWrapperAdapter = new HTWrapperAdapter(adapter, mLoadMoreContainerView);
+        mHTWrapperAdapter.setLoadMoreViewHolderListener(mLoadMoreViewHolderListener);
         mRecyclerView.setAdapter(mHTWrapperAdapter);
     }
 

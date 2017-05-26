@@ -297,8 +297,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
 
     @Override
     protected void initLoadMoreSupported() {
-        if (mHTWrapperAdapter == null) return;
-        mHTWrapperAdapter.setLoadMoreViewHolderListener(new HTWrapperAdapter.LoadMoreViewHolderListener() {
+        mLoadMoreViewHolderListener = new HTWrapperAdapter.LoadMoreViewHolderListener() {
             @Override
             public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
                 stopLoadMoreAnimation();
@@ -321,7 +320,10 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 mStartPosition = positionStart;//处理动画删除item时的loadMore的显示问题
                 mItemCount = itemCount;
             }
-        });
+        };
+        if (mHTWrapperAdapter != null) {
+            mHTWrapperAdapter.setLoadMoreViewHolderListener(mLoadMoreViewHolderListener);
+        }
     }
 
     @Override
