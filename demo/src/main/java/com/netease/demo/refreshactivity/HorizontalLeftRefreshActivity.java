@@ -3,7 +3,6 @@ package com.netease.demo.refreshactivity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -70,7 +69,7 @@ public class HorizontalLeftRefreshActivity extends AppCompatActivity implements 
         if (mData.size() > 20) {
             mRefreshLayout.setRefreshCompleted(false);//设置为false表示加载完毕
         } else {
-            new Handler(getMainLooper()).postDelayed(new Runnable() {
+            getWindow().getDecorView().postDelayed(new Runnable() {
                 @Override
                 public void run() {
 
@@ -88,7 +87,7 @@ public class HorizontalLeftRefreshActivity extends AppCompatActivity implements 
 
     @Override
     public void onRefresh() {
-        new Handler(getMainLooper()).postDelayed(new Runnable() {
+        getWindow().getDecorView().postDelayed(new Runnable() {
             public void run() {
                 for (int i = 0; i < Math.min(mData.size(), 3); i++) {
                     mData.add(0, mData.get(i));

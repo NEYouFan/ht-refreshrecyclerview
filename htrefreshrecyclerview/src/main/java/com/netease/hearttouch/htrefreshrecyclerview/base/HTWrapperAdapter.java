@@ -143,10 +143,17 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         RecyclerView.LayoutManager manager = recyclerView.getLayoutManager();
         if (manager instanceof GridLayoutManager) {
             final GridLayoutManager gridLayoutManager = (GridLayoutManager) manager;
+            final GridLayoutManager.SpanSizeLookup origin = gridLayoutManager.getSpanSizeLookup();
             gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
                 @Override
                 public int getSpanSize(int position) {
-                    return isLoadMoreView(position) ? gridLayoutManager.getSpanCount() : 1;
+                    if (isLoadMoreView(position)) {
+                        return gridLayoutManager.getSpanCount();
+                    } else {
+                        if (origin != null) {
+                            return origin.getSpanSize(position);
+                        } else return 1;
+                    }
                 }
             });
         }
@@ -193,6 +200,7 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
      *
      * @param adapter 被包裹的Adapter
      */
+
     private void setInnerAdapter(RecyclerView.Adapter<RecyclerView.ViewHolder> adapter) {
         if (adapter == null) {
             throw new IllegalArgumentException("adapter should not be null");

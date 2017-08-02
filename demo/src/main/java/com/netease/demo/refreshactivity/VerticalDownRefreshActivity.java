@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -53,7 +54,7 @@ public class VerticalDownRefreshActivity extends AppCompatActivity implements HT
         layoutManager = new LinearLayoutManager(this);
         // layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);//设置列表布局方式
 //        layoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);//设置瀑布流布局方式
-//         layoutManager = new GridLayoutManager(this, 2);//设置列表布局方式
+         layoutManager = new GridLayoutManager(this, 2);//设置列表布局方式
         mRefreshLayout.setLayoutManager(layoutManager);//设置列表布局方式
         mRefreshLayout.setEnableScrollOnRefresh(true);
         mRefreshLayout.addItemDecoration(new DividerItemDecoration(DividerItemDecoration.VERTICAL));
@@ -70,11 +71,11 @@ public class VerticalDownRefreshActivity extends AppCompatActivity implements HT
         if (mData.size() > 20) {
             mRefreshLayout.setRefreshCompleted(false);//设置为false表示加载完毕
         } else {
-            new Handler(getMainLooper()).postDelayed(new Runnable() {
+            getWindow().getDecorView().postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     for (int i = 0; i < Math.min(mData.size(), 3); i++) {
-                        mData.add(mData.get(i));
+                        mData.add(mData.get(i)+""+i);
                     }
                     mRefreshLayout.getAdapter().notifyDataSetChanged();
                     mRefreshLayout.setRefreshCompleted(true);
@@ -88,11 +89,11 @@ public class VerticalDownRefreshActivity extends AppCompatActivity implements HT
 
     protected void onResume() {
         super.onResume();
-       getWindow().getDecorView().post(new Runnable() {
-           public void run() {
-               mRefreshLayout.startAutoRefresh();
-           }
-       }) ;
+//       getWindow().getDecorView().post(new Runnable() {
+//           public void run() {
+//               mRefreshLayout.startAutoRefresh();
+//           }
+//       }) ;
     }
 
     @Override
