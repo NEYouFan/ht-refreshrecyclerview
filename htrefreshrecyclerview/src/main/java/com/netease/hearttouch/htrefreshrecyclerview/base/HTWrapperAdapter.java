@@ -12,6 +12,8 @@ import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.List;
+
 /**
  * 自定义包裹的Adapter,主要用来处理加载更多视图
  */
@@ -105,6 +107,17 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             }
         } else {
             mInnerAdapter.onBindViewHolder(holder, position);
+        }
+    }
+
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
+        if (holder instanceof InnerViewHolder) {
+            if (mLoadMoreViewHolderListener != null) {
+                mLoadMoreViewHolderListener.onBindData(holder, position, payloads);
+            }
+        } else {
+            mInnerAdapter.onBindViewHolder(holder, position, payloads);
         }
     }
 
@@ -226,6 +239,8 @@ public class HTWrapperAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         void onViewAttachedToWindow(RecyclerView.ViewHolder holder);
 
         void onBindData(RecyclerView.ViewHolder holder, int position);
+
+        void onBindData(RecyclerView.ViewHolder holder, int position, List<Object> payloads);
 
         void onViewDetachedFromWindow(RecyclerView.ViewHolder holder);
 

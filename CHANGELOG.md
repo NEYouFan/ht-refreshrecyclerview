@@ -1,3 +1,8 @@
+### v1.2.4 （2018.09.9）
+* 复写RecyclerView.Adapter的onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads)方法，解决局部刷新导致加载更多的显示问题
+
+### v1.2.3 （2017.08.02）
+* 解决GridLayoutManager.SpanSizeLookup被覆盖的问题
 
 ### v1.2.1 （2017.05.26）
 * 修复加载更多监听某些情况下不触发问题

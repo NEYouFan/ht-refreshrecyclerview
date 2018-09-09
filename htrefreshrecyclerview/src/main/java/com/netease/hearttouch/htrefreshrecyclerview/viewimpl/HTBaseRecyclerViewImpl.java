@@ -24,6 +24,7 @@ import com.netease.hearttouch.htrefreshrecyclerview.base.HTWrapperAdapter;
 import com.netease.hearttouch.htrefreshrecyclerview.utils.Utils;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static com.netease.hearttouch.htrefreshrecyclerview.utils.Utils.getFirstItemPosition;
 
@@ -311,6 +312,10 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
             public void onBindData(RecyclerView.ViewHolder holder, int position) {
             }
 
+            public void onBindData(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
+
+            }
+
             @Override
             public void onViewDetachedFromWindow(RecyclerView.ViewHolder holder) {
             }
@@ -415,7 +420,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
                 return;
             }
             RecyclerView.LayoutManager layoutManager = mRecyclerView.getLayoutManager();
-            if (layoutManager != null && layoutManager.getItemCount() > 0) {
+            if (layoutManager != null) {
                 int pos = Utils.getFirstItemPosition(layoutManager, true);
                 layoutManager.scrollToPosition(0);
                 mScrollJob.tryToScrollTo(mHTViewHolderTracker.getOffsetToRefresh(), mHTViewHolder.getAnimationTime(), 10 * pos);
@@ -454,7 +459,7 @@ abstract class HTBaseRecyclerViewImpl extends HTBaseRecyclerView {
     }
 
 
-    private int calculateChildrenSize(boolean includeLoadMore) {
+    private int calculateChildrenSize(boolean includeLoadMore) {// TODO: 2017/8/8 高度计算有问题 
         RecyclerView.LayoutManager layoutManager;
         if (mRecyclerView == null || (layoutManager = mRecyclerView.getLayoutManager()) == null)
             return 0;
